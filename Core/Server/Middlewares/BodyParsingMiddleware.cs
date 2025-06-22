@@ -1,0 +1,81 @@
+﻿using static System.Net.Mime.MediaTypeNames;
+using System.Text;
+using System.Security.Cryptography;
+using System.Xml.Linq;
+using Server.Utils;
+using KbinXml.Net;
+
+namespace Server.Middlewares;
+
+public class BodyParsingMiddleware(RequestDelegate next)
+{
+    static readonly byte[] Key =
+        Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
+
+    private readonly RequestDelegate _next = next;
+
+    public async Task Invoke(HttpContext context)
+    {
+        if(context.Request.Method == "GET" || !context.Request.Path.ToString().Contains("eamuse", StringComparison.CurrentCultureIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
+        var body = await ParseRequest(context);
+
+        context.Items["Encoding"] = body.Declaration?.Encoding;
+        var bodyString = body.ToString();
+        if(string.IsNullOrEmpty(bodyString))
+        {
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(""));
+            await _next(context);
+            return;
+        }
+        context.Request.Body = new MemoryStream(Encoding.GetEncoding(932).GetBytes(bodyString));
+
+        await _next(context);
+    }
+
+    public async Task<XDocument> ParseRequest(HttpContext context)
+    {
+        var isCompressed = context.Request.Headers["X-Compress"].ToString().Contains("lz77");
+        var info = context.Request.Headers["X-Eamuse-Info"].FirstOrDefault();
+        var contentLength = context.Request.Headers.ContentLength ?? 0;
+        byte[] data = new byte[(int)contentLength];
+
+        await context.Request.Body.ReadAsync(data.AsMemory(0, (int)contentLength));
+
+        if(info is not null)
+        {
+            string[] infoParts = info.Split('-');
+
+            for(int i = 0; i < 6; i++)
+            {
+                Key[i] = Convert.ToByte((infoParts[1] + infoParts[2]).Substring(i << 1, 2), 0x10);
+            }
+
+            byte[] rc4Key = MD5.HashData(Key);
+            data = RC4.Decrypt(rc4Key, data);
+        }
+
+        if(isCompressed)
+        {
+            data = LZ77.Decompress(data);
+        }
+
+        var returnData = new XDocument();
+
+        try
+        {
+            returnData = KbinConverter.ReadXmlLinq(data);
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine(e);
+        }
+        //Data is now xml in konami binary form
+        return returnData;
+    }
+
+}

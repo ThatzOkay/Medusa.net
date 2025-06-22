@@ -1,0 +1,209 @@
+using KbinXml.Net;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Server;
+using Server.Entities;
+using Server.Extensions;
+using Server.Middlewares;
+using Server.Request;
+using Server.Services;
+using Server.Utils;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
+
+var key =
+    Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddHandlers();
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=Medusa.db;"));
+
+builder.Services.AddIdentityCore<User>(config =>
+{
+    config.Password.RequiredLength = 8;
+    config.SignIn.RequireConfirmedEmail = true;
+    config.Lockout.AllowedForNewUsers = true;
+}).AddEntityFrameworkStores<AppDbContext>();
+
+builder.Services.AddTransient<ICardService, CardService>();
+builder.Services.AddSingleton<ISessionService, SessionService>();
+
+var app = builder.Build();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// Configure the HTTP request pipeline.
+
+//app.UseHttpsRedirection();
+app.UseMiddleware<BodyParsingMiddleware>();
+app.UseHandlers();
+
+var eamuseGroup = app.MapGroup("eamuse");
+
+eamuseGroup.MapPost("/{model}/{module}/{method}", (string model, string module, string method,
+    [FromServices] IHttpContextAccessor httpContextAccessor) =>
+{
+
+});
+
+eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService) =>
+{
+    // Enable buffering to allow multiple reads of the request body
+    httpContext.Request.EnableBuffering();
+
+    // The body is 932 encoded xml
+    using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
+    var body = await reader.ReadToEndAsync();
+
+    httpContext.Request.Body.Position = 0;
+
+    bool compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
+    bool encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+
+    var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
+
+    if(!string.IsNullOrEmpty(f))
+    {
+        var fParts = f.Split('.');
+        amusementRequest.Module = fParts[0];
+        amusementRequest.Method = fParts[1];
+    }
+
+    logger.LogInformation("Handling {Module} {Method}", amusementRequest.Module, amusementRequest.Method);
+
+    var document = new XDocument();
+
+    if (!string.IsNullOrEmpty(body))
+        document = XDocument.Parse(body);
+
+    var responseXml = await handlerService.Handle(amusementRequest.Model, amusementRequest.Module, amusementRequest.Method, document);
+
+    var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
+
+    switch(encoding)
+    {
+        case "shift_jis":
+            encoding = "ShiftJIS";
+            break;
+        case "us-ascii":
+            encoding = "ASCII";
+            break;
+        case "utf-8":
+            encoding = "UTF8";
+            break;
+        case "euc-jp":
+            encoding = "EUC_JP";
+            break;
+    }
+
+    byte[] encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
+
+    if(compress)
+    {
+        encodedBody = LZ77.CompressEmpty(encodedBody);
+    }
+
+    if(encrypt)
+    {
+        string[] originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault()?.Split('-') ?? [];
+        byte[] part = Convert.FromHexString((originalInfo[1] + originalInfo[2]));
+        for(int i = 0; i < 6; i++)
+            key[i] = part[i];
+        var rc4Key = MD5.HashData(key);
+        encodedBody = RC4.Encrypt(rc4Key, encodedBody);
+
+        httpContext.Response.Headers.Append("X-Eamuse-Info", string.Join('-', originalInfo));
+    }
+
+    return TypedResults.Bytes(encodedBody, "application/octet-stream");
+});
+
+eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService) =>
+{
+    // Enable buffering to allow multiple reads of the request body
+    httpContext.Request.EnableBuffering();
+    var body = "";
+    // The body is 932 encoded xml
+    if(httpContext.Request.Body.Length != 0)
+    {
+        using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
+        body = await reader.ReadToEndAsync();
+    }
+
+    httpContext.Request.Body.Position = 0;
+
+    bool compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
+    bool encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+
+    var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? ""};
+
+    if (!string.IsNullOrEmpty(f))
+    {
+        var fParts = f.Split('.');
+        amusementRequest.Module = fParts[0];
+        amusementRequest.Method = fParts[1];
+    }
+
+    logger.LogInformation("Handling {Module} {Method}", amusementRequest.Module, amusementRequest.Method);
+
+    var document = new XDocument();
+    
+    if(!string.IsNullOrEmpty(body))
+        document = XDocument.Parse(body);
+
+    var responseXml = await handlerService.Handle(amusementRequest.Model, amusementRequest.Module, amusementRequest.Method, document);
+
+    var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
+
+    switch(encoding)
+    {
+        case "shift_jis":
+            encoding = "ShiftJIS";
+            break;
+        case "us-ascii":
+            encoding = "ASCII";
+            break;
+        case "utf-8":
+            encoding = "UTF8";
+            break;
+        case "euc-jp":
+            encoding = "EUC_JP";
+            break;
+    }
+
+    var encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
+
+    if(compress)
+    {
+        encodedBody = LZ77.CompressEmpty(encodedBody);
+    }
+
+    if (!encrypt) return TypedResults.Bytes(encodedBody, "application/octet-stream");
+    var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault()?.Split('-') ?? [];
+    var part = Convert.FromHexString((originalInfo[1] + originalInfo[2]));
+    for(var i = 0; i < 6; i++)
+        key[i] = part[i];
+    var rc4Key = MD5.HashData(key);
+    encodedBody = RC4.Encrypt(rc4Key, encodedBody);
+
+    httpContext.Response.Headers.Append("X-Eamuse-Info", string.Join('-', originalInfo));
+
+    return TypedResults.Bytes(encodedBody, "application/octet-stream");
+});
+
+app.MapFallbackToFile("/index.html");
+
+await using var scope = app.Services.CreateAsyncScope();
+
+var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await appDbContext.Database.MigrateAsync();
+
+app.Run();
