@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Server.Entities;
-using Server.Services;
 using System.Xml.Linq;
+using Abstractions.Entities;
 using Abstractions.Handlers;
+using Abstractions.Services;
 
 namespace Server.Handlers.Common.Card
 {
@@ -27,7 +27,7 @@ namespace Server.Handlers.Common.Card
 
             var konamiId = _cardService.ConvertUidToKonamiId(cardId);
 
-            var card = new Entities.Card { RawId = cardId, KonamiId = konamiId };
+            var card = new Abstractions.Entities.Card { RawId = cardId, KonamiId = konamiId };
             var user = new User { Pin = int.Parse(password), UserName = konamiId, Cards = [card] };
 
             user.Cards.Add(card);

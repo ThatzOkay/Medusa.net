@@ -44,7 +44,7 @@ public class BodyParsingMiddleware(RequestDelegate next)
         var contentLength = context.Request.Headers.ContentLength ?? 0;
         byte[] data = new byte[(int)contentLength];
 
-        await context.Request.Body.ReadAsync(data.AsMemory(0, (int)contentLength));
+        await context.Request.Body.ReadExactlyAsync(data.AsMemory(0, (int)contentLength));
 
         if(info is not null)
         {

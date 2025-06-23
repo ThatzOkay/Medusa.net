@@ -1,7 +1,8 @@
 ﻿
-using Server.Entities;
+using System.Threading.Tasks;
+using Abstractions.Entities;
 
-namespace Server.Services
+namespace Abstractions.Services
 {
     public interface ICardService
     {

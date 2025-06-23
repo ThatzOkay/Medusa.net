@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Server.Services;
 using System.Collections.Generic;
 using System.Reflection;
+using Abstractions.Services;
 
 namespace Server.Extensions
 {

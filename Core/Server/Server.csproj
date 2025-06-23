@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="KbinXml.Net" Version="1.1.0" />
+    <PackageReference Include="KbinXml.Net" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
       <Version>9.0.0</Version>
@@ -35,4 +35,7 @@
     </PackageReference>
   </ItemGroup>
 
+  <Target Name="CreateCustomFolder" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)/plugins" />
+  </Target>
 </Project>

@@ -2,6 +2,7 @@
 using Server.Services;
 using System.Reflection;
 using Abstractions.Handlers;
+using Abstractions.Services;
 
 namespace Server.Extensions;
 

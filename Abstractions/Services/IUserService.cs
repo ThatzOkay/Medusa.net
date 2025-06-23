@@ -1,4 +1,4 @@
-﻿namespace Server.Services
+﻿namespace Abstractions.Services
 {
     public interface IUserService
     {

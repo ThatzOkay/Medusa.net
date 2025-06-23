@@ -2,7 +2,6 @@ using KbinXml.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server;
-using Server.Entities;
 using Server.Extensions;
 using Server.Middlewares;
 using Server.Request;
@@ -11,13 +10,29 @@ using Server.Utils;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+using Abstractions.Entities;
+using Abstractions.Services;
 
 var key =
     Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
 
 var builder = WebApplication.CreateBuilder(args);
 
+var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
+var logger = loggerFactory.CreateLogger("MedusaLogger");
+
+var pluginService = new PluginService(logger);
+
 // Add services to the container.
+
+pluginService.RegisterPlugins();
+
+var plugins = pluginService.GetPlugins();
+
+foreach (var plugin in plugins)
+{
+    await plugin.OnBuilderInitialize(builder);
+}
 
 builder.Services.AddHandlers();
 
@@ -31,7 +46,7 @@ builder.Services.AddIdentityCore<User>(config =>
 }).AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddTransient<ICardService, CardService>();
-builder.Services.AddSingleton<ISessionService, SessionService>();
+builder.Services.AddSingleton<IPluginService>(pluginService);
 
 var app = builder.Build();
 
@@ -43,6 +58,11 @@ app.UseStaticFiles();
 //app.UseHttpsRedirection();
 app.UseMiddleware<BodyParsingMiddleware>();
 app.UseHandlers();
+
+foreach (var plugin in plugins)
+{
+    await plugin.OnAppInitialize(app);
+}
 
 var eamuseGroup = app.MapGroup("eamuse");
 

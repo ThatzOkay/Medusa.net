@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Server.Entities;
 using Server.Utils;
 using System.Text;
+using Abstractions.Entities;
+using Abstractions.Services;
 
 namespace Server.Services;
 
