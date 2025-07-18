@@ -5,7 +5,7 @@ using Abstractions.Services;
 
 namespace Server.Services;
 
-public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<HandlerService> logger) : IHandlerService
+public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<HandlerService> logger, IXmlLogService xmlLogService) : IHandlerService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
     private readonly ILogger<HandlerService> _logger = logger;
@@ -25,6 +25,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
                 if(response is not null)
                 {
+                    xmlLogService.LogResponse(response.ToString());
                     return response;
                 }
 
@@ -44,7 +45,10 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
                 ? (IHandler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler, body)
                 : (IHandler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler);
 
-            return await handlerInstance.HandleAsync(model);
+            var document = await handlerInstance.HandleAsync(model);
+            
+            xmlLogService.LogResponse(document.ToString());
+            return document;
         }
 
         //If no handler is found return an empty document
@@ -57,12 +61,12 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
     {
         await using var scope = _serviceScopeFactory.CreateAsyncScope();
 
-        bool requiredXdocumentConstructor = handler.GetConstructors()
+        var requiredXdocumentConstructor = handler.GetConstructors()
             .Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(XDocument)));
 
-        Handler handlerInstance = requiredXdocumentConstructor
-            ? (Handler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler, body)
-            : (Handler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler);
+        var handlerInstance = requiredXdocumentConstructor
+            ? ActivatorUtilities.CreateInstance<Handler>(scope.ServiceProvider, handler, body)
+            : ActivatorUtilities.CreateInstance<Handler>(scope.ServiceProvider, handler);
 
         try
         {

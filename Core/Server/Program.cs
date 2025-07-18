@@ -47,6 +47,7 @@ builder.Services.AddIdentityCore<User>(config =>
 
 builder.Services.AddTransient<ICardService, CardService>();
 builder.Services.AddSingleton<IPluginService>(pluginService);
+builder.Services.AddSingleton<IXmlLogService, XmlLogService>();
 
 var app = builder.Build();
 
@@ -84,8 +85,8 @@ eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuer
 
     httpContext.Request.Body.Position = 0;
 
-    bool compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-    bool encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+    var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
+    var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
 
     var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
 
@@ -107,40 +108,31 @@ eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuer
 
     var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
 
-    switch(encoding)
+    encoding = encoding switch
     {
-        case "shift_jis":
-            encoding = "ShiftJIS";
-            break;
-        case "us-ascii":
-            encoding = "ASCII";
-            break;
-        case "utf-8":
-            encoding = "UTF8";
-            break;
-        case "euc-jp":
-            encoding = "EUC_JP";
-            break;
-    }
+        "shift_jis" => "ShiftJIS",
+        "us-ascii" => "ASCII",
+        "utf-8" => "UTF8",
+        "euc-jp" => "EUC_JP",
+        _ => encoding
+    };
 
-    byte[] encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
+    var encodedBody = KbinConverter.Write(responseXml, Enum.Parse<KnownEncodings>(encoding, true));
 
     if(compress)
     {
         encodedBody = LZ77.CompressEmpty(encodedBody);
     }
 
-    if(encrypt)
-    {
-        string[] originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault()?.Split('-') ?? [];
-        byte[] part = Convert.FromHexString((originalInfo[1] + originalInfo[2]));
-        for(int i = 0; i < 6; i++)
-            key[i] = part[i];
-        var rc4Key = MD5.HashData(key);
-        encodedBody = RC4.Encrypt(rc4Key, encodedBody);
+    if (!encrypt) return TypedResults.Bytes(encodedBody, "application/octet-stream");
+    var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault()?.Split('-') ?? [];
+    var part = Convert.FromHexString((originalInfo[1] + originalInfo[2]));
+    for(var i = 0; i < 6; i++)
+        key[i] = part[i];
+    var rc4Key = MD5.HashData(key);
+    encodedBody = RC4.Encrypt(rc4Key, encodedBody);
 
-        httpContext.Response.Headers.Append("X-Eamuse-Info", string.Join('-', originalInfo));
-    }
+    httpContext.Response.Headers.Append("X-Eamuse-Info", string.Join('-', originalInfo));
 
     return TypedResults.Bytes(encodedBody, "application/octet-stream");
 });
@@ -160,8 +152,8 @@ eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? mo
 
     httpContext.Request.Body.Position = 0;
 
-    bool compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-    bool encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+    var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
+    var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
 
     var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? ""};
 
@@ -183,21 +175,14 @@ eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? mo
 
     var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
 
-    switch(encoding)
+    encoding = encoding switch
     {
-        case "shift_jis":
-            encoding = "ShiftJIS";
-            break;
-        case "us-ascii":
-            encoding = "ASCII";
-            break;
-        case "utf-8":
-            encoding = "UTF8";
-            break;
-        case "euc-jp":
-            encoding = "EUC_JP";
-            break;
-    }
+        "shift_jis" => "ShiftJIS",
+        "us-ascii" => "ASCII",
+        "utf-8" => "UTF8",
+        "euc-jp" => "EUC_JP",
+        _ => encoding
+    };
 
     var encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
 

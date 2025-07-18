@@ -57,7 +57,9 @@ namespace Server.Handlers.Common
             facility.Add(location, line, portfw, _public, share);
 
             var document = new XDocument(new XElement("response", facility));
-
+            
+            Console.WriteLine(document.ToString());
+            
             return Task.FromResult(document);
         }
     }

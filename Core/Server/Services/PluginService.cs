@@ -20,6 +20,10 @@ public class PluginService(ILogger logger) : IPluginService
         watch.Start();
         
         logger.LogInformation("Registering plugins");
+
+        if (!Directory.Exists(_pluginPath))
+            Directory.CreateDirectory(_pluginPath);
+        
         var dlls = Directory.EnumerateFiles(_pluginPath, "*.dll").ToArray();
         for (var i = 0; i < dlls.Length; i++)
         {

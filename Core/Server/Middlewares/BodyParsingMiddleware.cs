@@ -9,7 +9,7 @@ namespace Server.Middlewares;
 
 public class BodyParsingMiddleware(RequestDelegate next)
 {
-    static readonly byte[] Key =
+    private static readonly byte[] Key =
         Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
 
     private readonly RequestDelegate _next = next;
@@ -42,20 +42,20 @@ public class BodyParsingMiddleware(RequestDelegate next)
         var isCompressed = context.Request.Headers["X-Compress"].ToString().Contains("lz77");
         var info = context.Request.Headers["X-Eamuse-Info"].FirstOrDefault();
         var contentLength = context.Request.Headers.ContentLength ?? 0;
-        byte[] data = new byte[(int)contentLength];
+        var data = new byte[(int)contentLength];
 
         await context.Request.Body.ReadExactlyAsync(data.AsMemory(0, (int)contentLength));
 
         if(info is not null)
         {
-            string[] infoParts = info.Split('-');
+            var infoParts = info.Split('-');
 
-            for(int i = 0; i < 6; i++)
+            for(var i = 0; i < 6; i++)
             {
                 Key[i] = Convert.ToByte((infoParts[1] + infoParts[2]).Substring(i << 1, 2), 0x10);
             }
 
-            byte[] rc4Key = MD5.HashData(Key);
+            var rc4Key = MD5.HashData(Key);
             data = RC4.Decrypt(rc4Key, data);
         }
 
