@@ -5,15 +5,20 @@
     "vitest.config.*",
     "cypress.config.*",
     "nightwatch.conf.*",
-    "playwright.config.*"
+    "playwright.config.*",
+    "./typed-router.d.ts"
   ],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
 
+    "paths": {
+      "@/*": ["src/*"],
+    },
+    "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["node"]
+    "types": ["node", "vite-plugin-vue-layouts-next/client", "unplugin-vue-router/client"]
   }
 }

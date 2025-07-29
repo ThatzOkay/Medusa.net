@@ -12,6 +12,7 @@ using System.Text;
 using System.Xml.Linq;
 using Abstractions.Entities;
 using Abstractions.Services;
+using Server.Authentication;
 
 var key =
     Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
@@ -33,6 +34,10 @@ foreach (var plugin in plugins)
 {
     await plugin.OnBuilderInitialize(builder);
 }
+
+builder.Services.AddAuthorization();
+builder.Services.AddIdentityApiEndpoints<User>()
+    .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddHandlers();
 
@@ -64,6 +69,8 @@ foreach (var plugin in plugins)
 {
     await plugin.OnAppInitialize(app);
 }
+
+app.MapIdentityApi();
 
 var eamuseGroup = app.MapGroup("eamuse");
 

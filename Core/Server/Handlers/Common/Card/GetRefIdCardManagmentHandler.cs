@@ -30,8 +30,6 @@ namespace Server.Handlers.Common.Card
             var card = new Abstractions.Entities.Card { RawId = cardId, KonamiId = konamiId };
             var user = new User { Pin = int.Parse(password), UserName = konamiId, Cards = [card] };
 
-            user.Cards.Add(card);
-
             await _userManager.CreateAsync(user);
 
             var getRefId = new XElement("cardmng", new XAttribute("status", "0"), new XAttribute("refid", konamiId), new XAttribute("dataid", konamiId));

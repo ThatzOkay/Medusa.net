@@ -46,11 +46,11 @@ public class PluginService(ILogger logger) : IPluginService
             
             logger.LogInformation("Registering plugin {}", instance.Name);
             AddPlugin(instance);
-            logger.LogInformation("Registered plugin {} of {}", i + 1, dlls.Length);
+            logger.LogInformation("Registered plugin {currentCount} of {fullCount}", i + 1, dlls.Length);
         }
         
         watch.Stop();
-        logger.LogInformation("Registered {} plugin(s) in {} ms", dlls.Length, watch.ElapsedMilliseconds);
+        logger.LogInformation("Registered {registeredPluginsCount} plugin(s) in {elapsed} ms", dlls.Length, watch.ElapsedMilliseconds);
     }
     
     public List<IMedusaPlugin> GetPlugins()
