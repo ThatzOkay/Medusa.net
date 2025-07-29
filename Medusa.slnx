@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="Abstractions/Abstractions.csproj" />
+  <Project Path="Core/Client/Client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="Core/Server/Server.csproj" />
+</Solution>
