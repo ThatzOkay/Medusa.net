@@ -25,7 +25,6 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
                 if(response is not null)
                 {
-                    xmlLogService.LogResponse(response.ToString());
                     return response;
                 }
 
@@ -47,12 +46,11 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
             var document = await handlerInstance.HandleAsync(model);
             
-            xmlLogService.LogResponse(document.ToString());
             return document;
         }
 
         //If no handler is found return an empty document
-        _logger.LogWarning($"No handler found for {model}/{module}/{method}");
+        _logger.LogWarning("No handler found for {model}/{module}/{method}", model, module, method);
 
         return new XDocument();
     }
