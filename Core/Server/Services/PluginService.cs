@@ -57,4 +57,14 @@ public class PluginService(ILogger logger) : IPluginService
     {
         return Plugins;
     }
+
+    public IMedusaPlugin? FindPlugin(string gameCode, int? minVer = null, int? maxVer = null)
+    {
+        var foundPlugins = Plugins.Where(x => x.GameCode == gameCode);
+        if (minVer != null)
+            foundPlugins = foundPlugins.Where(x => x.MinVer <= minVer);
+        if (maxVer != null)
+            foundPlugins = foundPlugins.Where(x => x.MaxVer >= maxVer);
+        return foundPlugins.FirstOrDefault();
+    }
 }

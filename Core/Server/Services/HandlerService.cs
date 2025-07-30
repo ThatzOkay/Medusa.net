@@ -64,9 +64,14 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         var requiredXdocumentConstructor = handler.GetConstructors()
             .Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(XDocument)));
 
-        var handlerInstance = requiredXdocumentConstructor
-            ? ActivatorUtilities.CreateInstance<Handler>(scope.ServiceProvider, handler, body)
-            : ActivatorUtilities.CreateInstance<Handler>(scope.ServiceProvider, handler);
+        if (handler.IsAbstract)
+        {
+            throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
+        }
+        
+        var handlerInstance = (requiredXdocumentConstructor
+            ? ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler, body)
+            : ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler)) as Handler;
 
         try
         {
@@ -129,6 +134,11 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
         var handleMethod = handlerInstance.GetType().GetMethod("Handle", [typeof(string)]);
         var handleAsyncMethod = handlerInstance.GetType().GetMethod("HandleAsync", [typeof(string)]);
+        
+        if (handler.IsAbstract)
+        {
+            throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
+        }
         
         var response = handleMethod?.DeclaringType != typeof(Handler)
             ? handlerInstance.Handle(model)

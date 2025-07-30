@@ -5,11 +5,8 @@ using Abstractions.Services;
 
 namespace Server.Handlers.Common.Card
 {
-    public class InquireCardManagmentHandlerInquireCardManagmentHandler(ICardService cardService, XDocument body) : Handler
+    public class InquireCardManagmentHandlerInquireCardManagmentHandler(IPluginService pluginService, ICardService cardService, XDocument body) : Handler
     {
-        private readonly XDocument _body = body;
-        private readonly ICardService _cardService = cardService;
-
         public override void Configure()
         {
             Module("cardmng");
@@ -18,7 +15,14 @@ namespace Server.Handlers.Common.Card
 
         public override async Task<XDocument> HandleAsync(string model)
         {
-            var cardId = _body.Root?.Element("cardmng")?.Attribute("cardid")?.Value;
+            var rootCall = body.Root;
+            
+            var splitModel = model.Split(':');
+            var gameCode = splitModel[0];
+            
+            var plugin = pluginService.FindPlugin(gameCode);
+            
+            var cardId = rootCall?.Element("cardmng")?.Attribute("cardid")?.Value;
 
             if(string.IsNullOrEmpty(cardId))
             {
@@ -26,14 +30,14 @@ namespace Server.Handlers.Common.Card
                 return new XDocument(new XElement("response", noCardId));
             }
 
-            var konamiId = _cardService.ConvertUidToKonamiId(cardId);
+            var konamiId = cardService.ConvertUidToKonamiId(cardId);
             if(string.IsNullOrEmpty(konamiId))
             {
                 var noKonamiId = new XElement("cardmng", new XAttribute("status", "111"));
                 return new XDocument(new XElement("response", noKonamiId));
             }
 
-            var exisitngCard = await _cardService.FindByKonamiId(konamiId);
+            var exisitngCard = await cardService.FindByKonamiId(konamiId);
 
             if(exisitngCard == null)
             {

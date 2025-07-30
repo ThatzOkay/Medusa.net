@@ -31,7 +31,7 @@ public class CardService : ICardService
             return string.Empty;
         }
 
-        int cardType = konamiId[14] == '1' ? 1 : konamiId[14] == '2' ? 2 : -1;
+        var cardType = konamiId[14] == '1' ? 1 : konamiId[14] == '2' ? 2 : -1;
 
         if(cardType == -1)
         {
@@ -117,7 +117,7 @@ public class CardService : ICardService
         unpackedId[0] ^= (byte)cardType;
         unpackedId[13] = 1;
 
-        for(int i = 1; i < 14; i++)
+        for(var i = 1; i < 14; i++)
         {
             unpackedId[i] ^= unpackedId[i - 1];
         }
@@ -132,13 +132,13 @@ public class CardService : ICardService
     {
         // Convert each byte to an 8-bit binary string and concatenate them
         var binaryString = new StringBuilder();
-        foreach(byte b in data)
+        foreach(var b in data)
         {
             binaryString.Append(Convert.ToString(b, 2).PadLeft(8, '0'));
         }
 
         // Ensure the total length is a multiple of 5 by padding with zeroes if necessary
-        int remainder = binaryString.Length % 5;
+        var remainder = binaryString.Length % 5;
         if(remainder != 0)
         {
             binaryString.Append(new string('0', 5 - remainder));
@@ -146,9 +146,9 @@ public class CardService : ICardService
 
         // Convert the 5-bit chunks back into bytes
         var result = new List<byte>();
-        for(int i = 0; i < binaryString.Length; i += 5)
+        for(var i = 0; i < binaryString.Length; i += 5)
         {
-            string chunk = binaryString.ToString(i, 5);
+            var chunk = binaryString.ToString(i, 5);
             result.Add(Convert.ToByte(chunk, 2));
         }
 
@@ -176,8 +176,8 @@ public class CardService : ICardService
 
     private static byte CalculateChecksum(byte[] data)
     {
-        int checksum = 0;
-        for(int i = 0; i < 15; i++)
+        var checksum = 0;
+        for(var i = 0; i < 15; i++)
         {
             if(i >= data.Length)
             {

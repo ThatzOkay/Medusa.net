@@ -35,6 +35,15 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="ResponseXml_7.xml" />
+    <None Remove="ResponseXml_6.xml" />
+    <None Remove="ResponseXml_5.xml" />
+    <None Remove="ResponseXml_4.xml" />
+    <None Remove="ResponseXml_3.xml" />
+    <None Remove="ResponseXml_1.xml" />
+  </ItemGroup>
+
   <Target Name="CreateCustomFolder" AfterTargets="Build">
     <MakeDir Directories="$(OutputPath)/plugins" />
   </Target>
