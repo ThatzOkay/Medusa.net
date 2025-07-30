@@ -21,14 +21,14 @@ namespace Server.Handlers.Common
                 new XAttribute("status", "0"));
 
             var location = new XElement("location",
-                new XElement("id", "00000000"),
-                new XElement("country", "US"),
-                new XElement("region", "NA"),
-                new XElement("name", "Medusa"),
+                new XElement("id", "00000000", new XAttribute("__type", "str")),
+                new XElement("country", "US", new XAttribute("__type", "str")),
+                new XElement("region", "NA", new XAttribute("__type", "str")),
+                new XElement("name", "Medusa", new XAttribute("__type", "str")),
                 new XElement("type", 0, new XAttribute("__type", "u8")));
 
             var line = new XElement("line",
-                new XElement("id", "00000000"),
+                new XElement("id", "1", new XAttribute("__type", "str")),
                 new XElement("class", 0, new XAttribute("__type", "u8")));
 
             var portfw = new XElement("portfw",
@@ -38,9 +38,9 @@ namespace Server.Handlers.Common
 
             var _public = new XElement("public",
                 new XElement("flag", 1, new XAttribute("__type", "u8")),
-                new XElement("name", "Medusa"),
-                new XElement("latitude", "0.0"),
-                new XElement("longitude", "0.0"));
+                new XElement("name", "Medusa", new XAttribute("__type", "str")),
+                new XElement("latitude", "0.0", new XAttribute("__type", "str")),
+                new XElement("longitude", "0.0", new XAttribute("__type", "str")));
 
             var share = new XElement("share",
                 new XElement("eacoin",
@@ -48,11 +48,11 @@ namespace Server.Handlers.Common
                     new XElement("notchcount", 3, new XAttribute("__type", "s32")),
                     new XElement("supplylimit", 100000, new XAttribute("__type", "s32"))),
                 new XElement("url",
-                    new XElement("eapass", "http://eagate.573.jp"),
-                    new XElement("arcadefan", "http://eagate.573.jp"),
-                    new XElement("konaminetdx", "http://eagate.573.jp"),
-                    new XElement("konamiid", "http://eagate.573.jp"),
-                    new XElement("eagate", "http://eagate.573.jp")));
+                    new XElement("eapass", "http://eagate.573.jp", new XAttribute("__type", "str")),
+                    new XElement("arcadefan", "http://eagate.573.jp", new XAttribute("__type", "str")),
+                    new XElement("konaminetdx", "http://eagate.573.jp", new XAttribute("__type", "str")),
+                    new XElement("konamiid", "http://eagate.573.jp", new XAttribute("__type", "str")),
+                    new XElement("eagate", "http://eagate.573.jp", new XAttribute("__type", "str"))));
 
             facility.Add(location, line, portfw, _public, share);
 
