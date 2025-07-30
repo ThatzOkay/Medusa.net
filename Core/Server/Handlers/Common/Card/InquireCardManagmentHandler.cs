@@ -45,9 +45,22 @@ namespace Server.Handlers.Common.Card
                 return new XDocument(new XElement("response", noCard));
             }
 
+            if (plugin is null)
+            {
+                var noPlugin = new XElement("cardmng", new XAttribute("status", "113"));
+                return new XDocument(new XElement("response", noPlugin));           
+            }
+
+            var profileExists = await plugin.DoesProfileExist(cardId);
+            
+            //TODO get actual user profile id
+            var userIdFlag = profileExists ? "1" : "0";
+            var extIdFlag = profileExists ? "1" : "0";
+            var newFlag = profileExists ? "0" : "1";
+            
             var cardManagment = new XElement("cardmng", new XAttribute("binded", "0"), new XAttribute("dataid", konamiId),
-                new XAttribute("ecflag", "1"), new XAttribute("expired", "0"), new XAttribute("newflag", "1"), new XAttribute("extidflag", "1"),
-                new XAttribute("refid", konamiId), new XAttribute("status", "0"), new XAttribute("useridflag", "1"));
+                new XAttribute("ecflag", "1"), new XAttribute("expired", "0"), new XAttribute(newFlag, "1"), new XAttribute(extIdFlag, "1"),
+                new XAttribute("refid", konamiId), new XAttribute("status", "0"), new XAttribute(userIdFlag, "1"));
 
             var document = new XDocument(new XElement("response", cardManagment));
 
