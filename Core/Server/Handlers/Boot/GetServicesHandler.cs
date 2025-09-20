@@ -65,7 +65,7 @@ namespace Server.Handlers.Boot
         "slobby", "sglobby"
     ];
 
-            foreach(string service in kfcServices)
+            foreach(var service in kfcServices)
                 services.Add(new XElement("item", new XAttribute("name", service), new XAttribute("url", sdvxurl)));
         }
 
@@ -77,7 +77,7 @@ namespace Server.Handlers.Boot
         "slobby", "sglobby"
     ];
 
-            foreach(string service in mdxServices)
+            foreach(var service in mdxServices)
                 services.Add(new XElement("item", new XAttribute("name", service), new XAttribute("url", mdxurl)));
         }
 
@@ -89,7 +89,7 @@ namespace Server.Handlers.Boot
         "slobby", "sglobby"
     ];
 
-            foreach(string service in m39Services)
+            foreach(var service in m39Services)
                 services.Add(new XElement("item", new XAttribute("name", service), new XAttribute("url", m39url)));
         }
 

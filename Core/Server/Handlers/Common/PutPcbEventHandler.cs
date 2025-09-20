@@ -17,7 +17,7 @@ namespace Server.Handlers.Common
             var itemElement = rootCallElement?.Element("pcbevent")?.Element("item");
 
             var timeElement = itemElement?.Element("time");
-            string time = timeElement is not null ? UnixTimeStampToDateTime(double.Parse(timeElement.Value)).ToString() : "";
+            var time = timeElement is not null ? UnixTimeStampToDateTime(double.Parse(timeElement.Value)).ToString() : "";
 
             _logger.LogInformation("PCBEvent: tag={Tag} srcid={SrcId} model={Model} name={Name} time={Time}",
                 rootCallElement?.Attribute("tag")?.Value ?? "",
@@ -38,7 +38,7 @@ namespace Server.Handlers.Common
         public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
-            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            var dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dateTime;
         }

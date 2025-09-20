@@ -6,14 +6,14 @@ namespace Server.Utils
     {
         public static string Encrypt(string key, string data)
         {
-            Encoding unicode = Encoding.Unicode;
+            var unicode = Encoding.Unicode;
 
             return Convert.ToBase64String(Encrypt(unicode.GetBytes(key), unicode.GetBytes(data)));
         }
 
         public static string Decrypt(string key, string data)
         {
-            Encoding unicode = Encoding.Unicode;
+            var unicode = Encoding.Unicode;
 
             return unicode.GetString(Encrypt(unicode.GetBytes(key), Convert.FromBase64String(data)));
         }
@@ -30,7 +30,7 @@ namespace Server.Utils
 
         private static byte[] InitializeKeyStream(byte[] key)
         {
-            byte[] keyStream = Enumerable.Range(0, 256)
+            var keyStream = Enumerable.Range(0, 256)
                 .Select(i => (byte)i)
                 .ToArray();
 
@@ -46,10 +46,10 @@ namespace Server.Utils
 
         private static IEnumerable<byte> EncryptOutput(byte[] key, IEnumerable<byte> data)
         {
-            byte[] keyStream = InitializeKeyStream(key);
+            var keyStream = InitializeKeyStream(key);
 
-            int keyStreamIndex = 0;
-            int keyIndex = 0;
+            var keyStreamIndex = 0;
+            var keyIndex = 0;
 
             return data.Select((dataByte) =>
             {

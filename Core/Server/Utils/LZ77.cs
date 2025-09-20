@@ -5,15 +5,15 @@ public class LZ77
     public static byte[] Decompress(byte[] data)
     {
         // init a buffer, size comes from eamuemu
-        byte[] res = new byte[0x190000];
+        var res = new byte[0x190000];
         // current data location
-        int p = 0;
+        var p = 0;
         // current output location
-        int r = 0;
+        var r = 0;
         // traceback location
-        int t = 0;
+        var t = 0;
         // bitmask location
-        int b = 8; // read next bitmask byte on start
+        var b = 8; // read next bitmask byte on start
         byte mask = 0;
 
         while(true)
@@ -50,7 +50,7 @@ public class LZ77
                 count = (count & 0x0F) + 3;
                 // copy earlier result bytes to the end
                 t = r - distance; // initialize traceback location
-                for(int i = 0; i < count; i++)
+                for(var i = 0; i < count; i++)
                 {
                     res[r] = t < 0 ? (byte)0x00 : res[t];
                     r += 1;
@@ -62,16 +62,16 @@ public class LZ77
             b += 1;
         }
         // r = result length
-        byte[] output = new byte[r];
+        var output = new byte[r];
         Array.Copy(res, output, r);
         return output;
     }
 
     public static byte[] CompressEmpty(byte[] data)
     {
-        byte[] res = new byte[data.Length + data.Length / 8 + 3];
-        int p = 0;
-        for(int i = 0; i < data.Length; i++)
+        var res = new byte[data.Length + data.Length / 8 + 3];
+        var p = 0;
+        for(var i = 0; i < data.Length; i++)
         {
             if(i % 8 == 0)
             {

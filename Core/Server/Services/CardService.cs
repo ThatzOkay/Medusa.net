@@ -9,7 +9,7 @@ namespace Server.Services;
 public class CardService : ICardService
 {
     private const string Alphabet = "0123456789ABCDEFGHJKLMNPRSTUWXYZ";
-    private readonly byte[] RawKey = Encoding.ASCII.GetBytes("?I'llB2c.YouXXXeMeHaYpy!");
+    private readonly byte[] _rawKey = "?I'llB2c.YouXXXeMeHaYpy!"u8.ToArray();
     private readonly DesEncryption _desEncryption;
 
     private readonly ILogger<CardService> _logger;
@@ -17,7 +17,7 @@ public class CardService : ICardService
 
     public CardService(ILogger<CardService> logger, AppDbContext context)
     {
-        var encryptionKey = RawKey.Select(x => (byte)(x * 2)).ToArray();
+        var encryptionKey = _rawKey.Select(x => (byte)(x * 2)).ToArray();
         _desEncryption = new DesEncryption(encryptionKey);
         _logger = logger;
         _context = context;
@@ -48,7 +48,7 @@ public class CardService : ICardService
             return string.Empty;
         }
 
-        for(int i = 13; i > 0; i--)
+        for(var i = 13; i > 0; i--)
         {
             card[i] ^= card[i - 1];
         }
@@ -58,15 +58,12 @@ public class CardService : ICardService
         var packed = Pack5(card.Take(13).ToArray()).Take(8).ToArray();
         var decrypted = _desEncryption.Decrypt(packed).Reverse().ToArray();
 
-        string cardId = BitConverter.ToString(decrypted).Replace("-", "").ToUpper();
+        var cardId = Convert.ToHexString(decrypted).ToUpper();
 
-        if(cardType == 1 && !cardId.StartsWith("E004") || cardType == 2 && cardId[0] != '0')
-        {
-            _logger.LogError("Invalid card `type");
-            return string.Empty;
-        }
+        if ((cardType != 1 || cardId.StartsWith("E004")) && (cardType != 2 || cardId[0] == '0')) return cardId;
+        _logger.LogError("Invalid card `type");
+        return string.Empty;
 
-        return cardId;
     }
 
     public string ConvertUidToKonamiId(string uid)
@@ -77,7 +74,7 @@ public class CardService : ICardService
             return string.Empty;
         }
 
-        int cardType = uid.StartsWith("E004") ? 1 : uid[0] == '0' ? 2 : -1;
+        var cardType = uid.StartsWith("E004") ? 1 : uid[0] == '0' ? 2 : -1;
 
         if(cardType == -1)
         {
@@ -106,7 +103,7 @@ public class CardService : ICardService
         }
 
         var unpackedId = Unpack5(encryptedId);
-        unpackedId = unpackedId.Take(13).Concat(new byte[] { 0, 0, 0 }).ToArray();
+        unpackedId = unpackedId.Take(13).Concat("\0\0\0"u8.ToArray()).ToArray();
 
         if(unpackedId.Length != 16)
         {
@@ -123,7 +120,7 @@ public class CardService : ICardService
         }
 
         unpackedId[14] = (byte)cardType;
-        unpackedId[15] = (byte)CalculateChecksum(unpackedId);
+        unpackedId[15] = CalculateChecksum(unpackedId);
 
         return string.Concat(unpackedId.Select(u => Alphabet[u]));
     }
@@ -158,7 +155,7 @@ public class CardService : ICardService
     private static byte[] Pack5(byte[] data)
     {
         var packed = new StringBuilder();
-        foreach(byte b in data)
+        foreach(var b in data)
         {
             packed.Append(Convert.ToString(b, 2).PadLeft(5, '0'));
         }
