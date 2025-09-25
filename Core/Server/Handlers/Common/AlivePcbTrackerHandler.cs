@@ -1,31 +1,28 @@
-﻿using Server.Handlers.Boot;
-using Server.Attributes;
-using System.Xml.Linq;
 using Abstractions.Handlers;
+using Server.Models.Response;
 
-namespace Server.Handlers.Common
+namespace Server.Handlers.Common;
+
+public class AlivePcbTrackerHandler : HandlerWithoutRequest<AlivePcbTrackerResponse>
 {
-    [Handler("pcbtracker", "alive")]
-    public class AlivePcbTrackerHandler(ILogger<GetServicesHandler> logger, XDocument body) : IHandler
+    public override void Configure()
     {
-        private readonly ILogger<GetServicesHandler> _logger = logger;
-        private readonly XDocument _body = body;
-
-        public Task<XDocument> HandleAsync(string model)
-        {
-            var pcbTracker = new XElement("response",
-                new XElement("pcbtracker",
-                    new XAttribute("status", "0"),
-                    new XAttribute("expire", "1200"),
-                    new XAttribute("ecenable", "1"),
-                    new XAttribute("eclimit", "0"),
-                    new XAttribute("limit", "0"),
-                    new XAttribute("time", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())));
-
-            var document = new XDocument(new XElement("response", pcbTracker));
-
-            return Task.FromResult(document);
-        }
+        Module("pcbtracker");
+        Method("alive");
     }
 
+    public override AlivePcbTrackerResponse Handle(string model)
+    {
+        var pcbtracker = new AlivePcbTrackerResponse()
+        {
+            Status = 0,
+            Expire = 1200,
+            EcEnable = 1,
+            EcLimit = 0,
+            Limit = 0,
+            Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        
+        return pcbtracker;
+    }
 }

@@ -1,67 +1,67 @@
-﻿using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.AspNetCore.Hosting.Server;
-using System.Xml.Linq;
 using Abstractions.Handlers;
-using Server.Attributes;
+using Abstractions.SerializationTypes;
+using Server.Models.Response;
 
-namespace Server.Handlers.Common
+namespace Server.Handlers.Common;
+
+public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
 {
-    [Handler("facility", "get")]
-    public class GetFacilityHandler(IServer server, XDocument body) : IHandler
+    public override void Configure()
     {
-        private readonly IServer _server = server;
-        private IServerAddressesFeature? serverAddressesFeature => _server.Features.Get<IServerAddressesFeature>();
-        private readonly XDocument _body = body;
-
-        public Task<XDocument> HandleAsync(string model)
-        {
-            var port = "8083";
-
-            var facility = new XElement("facility",
-                new XAttribute("status", "0"));
-
-            var location = new XElement("location",
-                new XElement("id", "00000000", new XAttribute("__type", "str")),
-                new XElement("country", "US", new XAttribute("__type", "str")),
-                new XElement("region", "NA", new XAttribute("__type", "str")),
-                new XElement("name", "Medusa", new XAttribute("__type", "str")),
-                new XElement("type", 0, new XAttribute("__type", "u8")));
-
-            var line = new XElement("line",
-                new XElement("id", "1", new XAttribute("__type", "str")),
-                new XElement("class", 0, new XAttribute("__type", "u8")));
-
-            var portfw = new XElement("portfw",
-                new XElement("globalip", "127.0.0.1", new XAttribute("__type", "ip4")),
-                new XElement("globalport", "5246", new XAttribute("__type", "u16")),
-                new XElement("privateport", "5246", new XAttribute("__type", "u16")));
-
-            var _public = new XElement("public",
-                new XElement("flag", 1, new XAttribute("__type", "u8")),
-                new XElement("name", "Medusa", new XAttribute("__type", "str")),
-                new XElement("latitude", "0.0", new XAttribute("__type", "str")),
-                new XElement("longitude", "0.0", new XAttribute("__type", "str")));
-
-            var share = new XElement("share",
-                new XElement("eacoin",
-                    new XElement("notchamount", 3000, new XAttribute("__type", "s32")),
-                    new XElement("notchcount", 3, new XAttribute("__type", "s32")),
-                    new XElement("supplylimit", 100000, new XAttribute("__type", "s32"))),
-                new XElement("url",
-                    new XElement("eapass", "http://eagate.573.jp", new XAttribute("__type", "str")),
-                    new XElement("arcadefan", "http://eagate.573.jp", new XAttribute("__type", "str")),
-                    new XElement("konaminetdx", "http://eagate.573.jp", new XAttribute("__type", "str")),
-                    new XElement("konamiid", "http://eagate.573.jp", new XAttribute("__type", "str")),
-                    new XElement("eagate", "http://eagate.573.jp", new XAttribute("__type", "str"))));
-
-            facility.Add(location, line, portfw, _public, share);
-
-            var document = new XDocument(new XElement("response", facility));
-            
-            Console.WriteLine(document.ToString());
-            
-            return Task.FromResult(document);
-        }
+        Module("facility");
+        Method("get");
     }
 
+    public override GetFacilityResponse Handle(string model)
+    {
+        var facility = new GetFacilityResponse()
+        {
+            Status = 0,
+            Location = new FacilityLocation()
+            {
+                Id = new XrpcString("00000000"),
+                Country = new XrpcString("US"),
+                Region = new XrpcString("NA"),
+                Name = new XrpcString("Medusa"),
+                Type = new XrpcULong(0)
+            },
+            Line = new FacilityLine()
+            {
+                Id = new XrpcString("1"),
+                Class = new XrpcULong(0)
+            },
+            PortForward = new FacilityPortForward()
+            {
+                GlobalIp = new XrpcString("127.0.0.1"),
+                GlobalPort = new XrpcULong(5246),
+                PrivatePort = new XrpcULong(5246)
+            },
+            Public = new FacilityPublic()
+            {
+                Flag = new XrpcULong(1),
+                Name = new XrpcString("Medusa"),
+                Latitude = new XrpcString("0.0"),
+                Longitude = new XrpcString("0.0")
+            },
+            Share = new FacilityShare()
+            {
+                EaCoin = new FacilityEaCoin()
+                {
+                    NotchAmount = new XrpcLong(3000),
+                    NotchCount = new XrpcLong(3),
+                    SupplyLimit = new XrpcLong(100000)
+                },
+                Url = new FacilityUrl()
+                {
+                    EaPass = new XrpcString("http://eagate.573.jp"),
+                    ArcadeFan = new XrpcString("http://eagate.573.jp"),
+                    KonamiNetDx = new XrpcString("http://eagate.573.jp"),
+                    KonamiId = new XrpcString("http://eagate.573.jp"),
+                    EaGate = new XrpcString("http://eagate.573.jp")
+                }
+            }
+        };
+        
+        return facility;
+    }
 }

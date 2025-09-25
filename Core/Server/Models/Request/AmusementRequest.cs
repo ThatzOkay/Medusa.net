@@ -1,4 +1,4 @@
-﻿namespace Server.Request
+﻿namespace Server.Models.Request
 {
     public class AmusementRequest
     {

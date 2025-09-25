@@ -23,7 +23,7 @@ public static class ApplicationBuilderExtensions
         }
 
         foreach (var types in assemblies.Select(assembly => assembly.GetTypes().Where(a => a.GetInterfaces().Contains(typeof(IHandler)) ||
-                     (a.IsSubclassOf(typeof(Handler)) && !a.IsAbstract))))
+                     (a.IsSubclassOf(typeof(Handler<,>)) && !a.IsAbstract))))
         {
             handlerService.Handlers.AddRange(types);
         }

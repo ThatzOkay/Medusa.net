@@ -1,5 +1,7 @@
-﻿using Server.Attributes;
+﻿using System.Reflection;
+using Server.Attributes;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 using Abstractions.Handlers;
 using Abstractions.Services;
 
@@ -44,7 +46,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
                 ? (IHandler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler, body)
                 : (IHandler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler);
 
-            var document = await handlerInstance.HandleAsync(model);
+            var document = new XDocument();//await handlerInstance.HandleAsync(model);
             
             return document;
         }
@@ -57,6 +59,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
     private async Task<XDocument?> HandleInheritanceClass(Type handler, string model, string module, string method, XDocument body)
     {
+        var isHandlerWithoutRequest = false;
         await using var scope = _serviceScopeFactory.CreateAsyncScope();
 
         var requiredXdocumentConstructor = handler.GetConstructors()
@@ -67,10 +70,32 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
             throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
         }
         
-        var handlerInstance = (requiredXdocumentConstructor
-            ? ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler, body)
-            : ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler)) as Handler;
+        var handlerInstance = ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler) as BaseHandler;
 
+        if (handlerInstance is null)
+        {
+            return null;       
+        }
+        
+        var baseType = handler.BaseType;
+
+        if (baseType is { IsGenericType: true })
+        {
+            var genericDef = baseType.GetGenericTypeDefinition();
+
+            if (genericDef == typeof(HandlerWithoutRequest<>))
+            {
+                isHandlerWithoutRequest = true;
+                handlerInstance.Definition =
+                    new HandlerDefinition(handler, baseType.GenericTypeArguments[0], typeof(object));
+            }
+            else
+            {
+                handlerInstance.Definition =
+                    new HandlerDefinition(handler, baseType.GenericTypeArguments[0], baseType.GenericTypeArguments[1]);
+            }
+        }
+        
         try
         {
             var configureMethod = handler.GetMethod("Configure");
@@ -84,11 +109,11 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
         var modelParts = model.Split(':');
 
-        var handlerModule = handlerInstance.HandlerModule;
-        var handlerMethod = handlerInstance.HandlerMethod;
-        var handlerGameCode = handlerInstance.HandlerGameCode;
-        var handlerMinVer = handlerInstance.HandlerMinVer;
-        var handlerMaxVer = handlerInstance.HandlerMaxVer;
+        var handlerModule = handlerInstance.Definition.HandlerModule;
+        var handlerMethod = handlerInstance.Definition.HandlerMethod;
+        var handlerGameCode = handlerInstance.Definition.HandlerGameCode;
+        var handlerMinVer = handlerInstance.Definition.HandlerMinVer;
+        var handlerMaxVer = handlerInstance.Definition.HandlerMaxVer;
 
         if(string.IsNullOrEmpty(handlerModule))
         {
@@ -129,24 +154,95 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
         if(handlerModule != module || handlerMethod != method)
             return null;
-
-        var handleMethod = handlerInstance.GetType().GetMethod("Handle", [typeof(string)]);
-        var handleAsyncMethod = handlerInstance.GetType().GetMethod("HandleAsync", [typeof(string)]);
         
         if (handler.IsAbstract)
         {
             throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
         }
-        
-        var response = handleMethod?.DeclaringType != typeof(Handler)
-            ? handlerInstance.Handle(model)
-            : handleAsyncMethod?.DeclaringType != typeof(Handler)
-                ? await handlerInstance.HandleAsync(model)
-                : null;
 
-        if (response is not null) return response;
+        object? request = null;
+        
+        if (!isHandlerWithoutRequest)
+        {
+            var modelType = handlerInstance.Definition.RequestType;
+
+            var serializer = new XmlSerializer(modelType);
+            
+            var callElement = body.Element("call");
+
+            if (callElement is null)
+            {
+                _logger.LogError("Call element not found in request");
+                return null;           
+            }
+            
+            request = serializer.Deserialize(callElement.FirstNode!.CreateReader());
+        }
+        
+        XElement? responseElement = null;
+        
+        MethodInfo? handleMethod;
+        MethodInfo? handleAsyncMethod;
+
+        var methods = handler.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+        if (isHandlerWithoutRequest)
+        {
+            handleMethod = methods.FirstOrDefault(m => m.Name == "Handle" && m.GetParameters().Length == 1);
+            handleAsyncMethod = methods.FirstOrDefault(m => m.Name == "HandleAsync" && m.GetParameters().Length == 1);
+        }
+        else
+        {
+            handleMethod = methods.FirstOrDefault(m =>
+                m.Name == "Handle" &&
+                m.GetParameters().Length == 2
+            );
+            handleAsyncMethod = methods.FirstOrDefault(m =>
+                m.Name == "HandleAsync" &&
+                m.GetParameters().Length == 2
+            );
+        }
+
+        var parameters = new List<object>();
+        if (!isHandlerWithoutRequest && request is not null)
+        {
+            parameters.Add(request);
+        }
+        parameters.Add(model);
+
+        if (handleMethod != null)
+        {
+            // Synchronous Handle
+            var result = handleMethod.Invoke(handlerInstance, parameters.ToArray());
+            responseElement = ToXElement(result);
+        }
+        else if (handleAsyncMethod != null)
+        {
+            dynamic task = handleAsyncMethod.Invoke(handlerInstance, parameters.ToArray())!;
+            await task;
+            var result = task.GetAwaiter().GetResult();
+            responseElement = ToXElement(result);
+        }
+
+        if (responseElement != null)
+        {
+            var responseDocument = new XDocument(new XElement("response", responseElement));
+            return responseDocument;
+        }
+
         _logger.LogError("Handle and HandleAsync not implemented for {Handler}", handler.Name);
         return null;
     }
 
+    public static XElement ToXElement(object obj)
+    {
+        var serializer = new XmlSerializer(obj.GetType());
+
+        var ns = new XmlSerializerNamespaces();
+        ns.Add(string.Empty, string.Empty);
+
+        using var writer = new StringWriter();
+        serializer.Serialize(writer, obj, ns);
+
+        return XElement.Parse(writer.ToString());
+    }
 }

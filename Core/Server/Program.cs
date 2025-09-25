@@ -1,10 +1,12 @@
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using KbinXml.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Extensions;
 using Server.Middlewares;
-using Server.Request;
 using Server.Services;
 using Server.Utils;
 using System.Security.Cryptography;
@@ -12,10 +14,16 @@ using System.Text;
 using System.Xml.Linq;
 using Abstractions.Entities;
 using Abstractions.Services;
+using Abstractions.Utils;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Server.Authentication;
+using Server.Models.Request;
 
 var key =
     Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
+
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +63,22 @@ builder.Services.AddSingleton<IPluginService>(pluginService);
 builder.Services.AddSingleton<IXmlLogService, XmlLogService>();
 
 var app = builder.Build();
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var serverAddresses = app.Services.GetRequiredService<IServer>()
+        .Features.Get<IServerAddressesFeature>();
+
+    var localIp = IpUtils.GetLocalIPv4();
+
+    if (serverAddresses == null || localIp == null) return;
+    foreach (var address in serverAddresses.Addresses)
+    {
+        var uri = new Uri(address);
+        var displayAddress = $"{uri.Scheme}://{localIp}:{uri.Port}";
+        Console.WriteLine($"Accessible at: {displayAddress}");
+    }
+});
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -191,8 +215,17 @@ eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? mo
         _ => encoding
     };
 
-    var encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
-
+    byte[] encodedBody;
+    
+    if (httpContext.Request.Headers.TryGetValue("IsEncoded", out var value) && value == "false")
+    {
+        var encoder = Encoding.GetEncoding(encoding);
+        encodedBody = encoder.GetBytes(responseXml.ToString());
+    }
+    else
+    {
+        encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
+    }
     if(compress)
     {
         encodedBody = LZ77.CompressEmpty(encodedBody);
@@ -219,3 +252,5 @@ var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 await appDbContext.Database.MigrateAsync();
 
 app.Run();
+return;
+

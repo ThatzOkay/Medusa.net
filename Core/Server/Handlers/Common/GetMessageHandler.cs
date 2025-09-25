@@ -1,25 +1,24 @@
-﻿using System.Xml.Linq;
 using Abstractions.Handlers;
-using Server.Attributes;
+using Server.Models.Response;
 
-namespace Server.Handlers.Common
+namespace Server.Handlers.Common;
+
+public class GetMessageHandler: HandlerWithoutRequest<GetMessageResponse>
 {
-    [Handler("message", "get")]
-    public class GetMessageHandler(XDocument body) : IHandler
+    public override void Configure()
     {
-        private readonly XDocument _body = body;
-
-        public Task<XDocument> HandleAsync(string model)
-        {
-            var message = new XElement("message",
-                new XAttribute("expire", "300"),
-                new XAttribute("status", "0"));
-
-            var document = new XDocument(
-                new XElement("response", message));
-
-            return Task.FromResult(document);
-        }
+        Module("message");
+        Method("get");
     }
 
+    public override GetMessageResponse Handle(string model)
+    {
+        var message = new GetMessageResponse()
+        {
+            Expire = 300,
+            Status = 0
+        };
+        
+        return message;
+    }
 }

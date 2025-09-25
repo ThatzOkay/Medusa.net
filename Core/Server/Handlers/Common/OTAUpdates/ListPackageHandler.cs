@@ -1,22 +1,24 @@
-﻿using System.Xml.Linq;
 using Abstractions.Handlers;
-using Server.Attributes;
+using Server.Models.Response;
 
-namespace Server.Handlers.Common.OTAUpdates
+namespace Server.Handlers.Common.OTAUpdates;
+
+public class ListPackageHandler: HandlerWithoutRequest<ListPackageResponse>
 {
-    [Handler("package", "list")]
-    public class ListPackageHandler(XDocument body) : IHandler
+    public override void Configure()
     {
-        private readonly XDocument _body = body;
-
-        public Task<XDocument> HandleAsync(string model)
-        {
-            var package = new XElement("package", new XAttribute("expire", "600"), new XAttribute("status", "0"));
-
-            var document = new XDocument(new XElement("response", package));
-
-            return Task.FromResult(document);
-        }
+        Module("package");
+        Method("list");
     }
 
+    public override ListPackageResponse Handle(string model)
+    {
+        var package = new ListPackageResponse()
+        {
+            Expire = 600,
+            Status = 0
+        };
+        
+        return package;
+    }
 }

@@ -1,16 +1,17 @@
 ﻿using Microsoft.AspNetCore.Hosting.Server;
 using System.Xml.Linq;
 using Abstractions.Handlers;
+using Abstractions.SerializationTypes;
+using Abstractions.Utils;
+using Server.Models.Response;
 
 namespace Server.Handlers.Boot
 {
-    public class GetServicesHandler(IServer server, ILogger<GetServicesHandler> logger, XDocument body) : Handler
+    public class GetServicesHandler(IServer server, ILogger<GetServicesHandler> logger) : HandlerWithoutRequest<GetServicesResponse>
     {
-        private readonly IServer _server = server;
         private readonly ILogger<GetServicesHandler> _logger = logger;
-        private readonly XDocument _body = body;
-        private const string CommonUrl = "http://127.0.0.1:5120/eamuse";
-        private string listeningAddress = "http://127.0.0.1:5120";
+        private static readonly string ListeningAddress = $"http://{IpUtils.GetLocalIPv4()}:5120";
+        private static readonly string CommonUrl = $"{ListeningAddress}/eamuse";
 
         public override void Configure()
         {
@@ -18,16 +19,23 @@ namespace Server.Handlers.Boot
             Method("get");
         }
 
-        public override Task<XDocument> HandleAsync(string model)
+        public override GetServicesResponse Handle(string model)
         {
             var services = CreateCoreServicesElement();
-            var document = new XDocument(new XElement("response", services));
-            return Task.FromResult(document);
+            return services;
         }
 
-        private static XElement CreateCoreServicesElement()
+        private static GetServicesResponse CreateCoreServicesElement()
         {
-            var services = new XElement("services",
+            var services = new GetServicesResponse()
+            {       
+                Expire = 3600,
+                Method = "get",
+                Mode = "operation",
+                Status = 0
+            };
+            
+            var servicesr = new XElement("services",
                 new XAttribute("expire", "3600"),
                 new XAttribute("method", "get"),
                 new XAttribute("mode", "operation"),
@@ -42,24 +50,31 @@ namespace Server.Handlers.Boot
 
             foreach(var service in coreServices)
             {
-                services.Add(new XElement("item",
-                    new XAttribute("name", service),
-                    new XAttribute("url", $"{CommonUrl}/{service}")));
+                services.Items.Add(new ServiceItem
+                {
+                    Name = service,
+                    Url = $"{CommonUrl}/{service}"
+                });
             }
+            
+            services.Items.Add(new ServiceItem()
+            {
+                Name = "ntp",
+                Url = "ntp://pool.ntp.org/"
+            });
 
-            services.Add(new XElement("item", new XAttribute("name", "ntp"),
-                new XAttribute("url", "ntp://pool.ntp.org/")));
-
-            services.Add(new XElement("item", new XAttribute("name", "keepalive"),
-                new XAttribute("url",
-                    "http://127.0.0.1:8083/keepalive?pa=127.0.0.1&ia=127.0.0.1&ga=127.0.0.1&ma=127.0.0.1&t1=2&t2=10")));
-
+            services.Items.Add(new ServiceItem()
+            {
+                Name = "keepalive",
+                Url = "http://127.0.0.1:8083/keepalive?pa=127.0.0.1&ia=127.0.0.1&ga=127.0.0.1&ma=127.0.0.1&t1=2&t2=10"
+            });
+            
             return services;
         }
 
         private static void AddKfcServices(XElement services)
         {
-            const string sdvxurl = $"{CommonUrl}";
+            var sdvxurl = $"{CommonUrl}";
             string[] kfcServices = [
         "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
         "slobby", "sglobby"
@@ -71,7 +86,7 @@ namespace Server.Handlers.Boot
 
         private static void AddMdxServices(XElement services)
         {
-            const string mdxurl = $"{CommonUrl}";
+            var mdxurl = $"{CommonUrl}";
             string[] mdxServices = [
         "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
         "slobby", "sglobby"
@@ -83,7 +98,7 @@ namespace Server.Handlers.Boot
 
         private static void AddM39Services(XElement services)
         {
-            const string m39url = $"{CommonUrl}";
+            var m39url = $"{CommonUrl}";
             string[] m39Services = [
         "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
         "slobby", "sglobby"

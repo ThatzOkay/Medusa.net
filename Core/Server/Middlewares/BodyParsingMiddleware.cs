@@ -72,7 +72,15 @@ public class BodyParsingMiddleware(RequestDelegate next)
         }
         catch(Exception e)
         {
-            Console.WriteLine(e);
+            //Console.WriteLine(e); 
+            var testData = Encoding.ASCII.GetString(data);
+
+            if (!string.IsNullOrEmpty(testData))
+            {
+                //Data is not konami encoded but raw xml
+                returnData = XDocument.Parse(testData);
+                context.Request.Headers.Append("IsEncoded", "false");
+            }
         }
         //Data is now xml in konami binary form
         return returnData;
