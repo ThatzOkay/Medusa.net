@@ -139,16 +139,27 @@ eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuer
 
     var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
 
-    encoding = encoding switch
+    var encodingEnum = encoding switch
     {
-        "shift_jis" => "ShiftJIS",
-        "us-ascii" => "ASCII",
-        "utf-8" => "UTF8",
-        "euc-jp" => "EUC_JP",
-        _ => encoding
+        "shift_jis" or "ShiftJIS" or "SHIFT_JIS"  => KnownEncodings.ShiftJIS,
+        "us-ascii"   => KnownEncodings.ASCII,
+        "utf-8"      => KnownEncodings.UTF8,
+        "euc-jp"     => KnownEncodings.EUC_JP,
+        "iso-8859-1" => KnownEncodings.ISO_8859_1,
+        _ => throw new ArgumentException($"Unknown encoding: {encoding}")
     };
 
-    var encodedBody = KbinConverter.Write(responseXml, Enum.Parse<KnownEncodings>(encoding, true));
+    if (amusementRequest.Module == "package")
+    {
+        logger.LogInformation("{xml}", responseXml);
+    }
+
+    var encodedBody = KbinConverter.Write(responseXml, encodingEnum);
+        
+    if (amusementRequest.Module == "package")
+    {
+        File.WriteAllBytes("test.bin", encodedBody);
+    }
 
     if(compress)
     {
@@ -206,15 +217,21 @@ eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? mo
 
     var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
 
-    encoding = encoding switch
+    var encodingEnum = encoding switch
     {
-        "shift_jis" => "ShiftJIS",
-        "us-ascii" => "ASCII",
-        "utf-8" => "UTF8",
-        "euc-jp" => "EUC_JP",
-        _ => encoding
+        "shift_jis" or "ShiftJIS" or "SHIFT_JIS"  => KnownEncodings.ShiftJIS,
+        "us-ascii"   => KnownEncodings.ASCII,
+        "utf-8"      => KnownEncodings.UTF8,
+        "euc-jp"     => KnownEncodings.EUC_JP,
+        "iso-8859-1" => KnownEncodings.ISO_8859_1,
+        _ => throw new ArgumentException($"Unknown encoding: {encoding}")
     };
 
+    if (amusementRequest.Module == "package")
+    {
+        logger.LogInformation("{xml}", responseXml);
+    }
+    
     byte[] encodedBody;
     
     if (httpContext.Request.Headers.TryGetValue("IsEncoded", out var value) && value == "false")
@@ -224,7 +241,12 @@ eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? mo
     }
     else
     {
-        encodedBody = KbinConverter.Write(responseXml, (KnownEncodings)Enum.Parse(typeof(KnownEncodings), encoding, true));
+        encodedBody = KbinConverter.Write(responseXml, encodingEnum);
+        
+        if (amusementRequest.Module == "package")
+        {
+            File.WriteAllBytes("test.bin", encodedBody);
+        }
     }
     if(compress)
     {

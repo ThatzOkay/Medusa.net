@@ -8,7 +8,4 @@ public class ListPackageResponse
 {
     [XmlAttribute("status")]
     public required  int Status { get; set; }
-    
-    [XmlAttribute("expire")]
-    public required  int Expire { get; set; }
 }

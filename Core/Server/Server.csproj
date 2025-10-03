@@ -17,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FastEndpoints" Version="7.0.1" />
+    <PackageReference Include="FastEndpoints.ClientGen" Version="7.0.1" />
+    <PackageReference Include="FastEndpoints.Security" Version="7.0.1" />
     <PackageReference Include="KbinXml.Net" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
@@ -33,6 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Riok.Mapperly" Version="4.2.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +46,10 @@
     <None Remove="ResponseXml_4.xml" />
     <None Remove="ResponseXml_3.xml" />
     <None Remove="ResponseXml_1.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Endpoints\" />
   </ItemGroup>
 
   <Target Name="CreateCustomFolder" AfterTargets="Build">
