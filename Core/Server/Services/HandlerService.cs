@@ -69,14 +69,12 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         {
             throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
         }
-        
-        var handlerInstance = ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler) as BaseHandler;
 
-        if (handlerInstance is null)
+        if(ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler) is not BaseHandler handlerInstance)
         {
-            return null;       
+            return null;
         }
-        
+
         var baseType = handler.BaseType;
 
         if (baseType is { IsGenericType: true })

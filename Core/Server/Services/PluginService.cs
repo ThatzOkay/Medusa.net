@@ -27,8 +27,20 @@ public class PluginService(ILogger logger) : IPluginService
         var dlls = Directory.EnumerateFiles(_pluginPath, "*.dll").ToArray();
         for (var i = 0; i < dlls.Length; i++)
         {
-            var assembly = Assembly.LoadFile(dlls[i]);
-            var medusaPlugin = assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IMedusaPlugin)));
+            var assembly = Assembly.LoadFrom(dlls[i]);
+            Type? medusaPlugin = null;
+
+            try
+            {
+                medusaPlugin = assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IMedusaPlugin)));
+            }
+            catch(ReflectionTypeLoadException ex)
+            {
+                logger.LogWarning("Plugin '{}' appears to be outdated or incompatible. Please update it to the latest version of Medusa. Details: {}",
+                    assembly.GetName().Name,
+                    string.Join("; ", ex.LoaderExceptions.Select(e => e?.Message ?? "Unknown error")));
+                continue;
+            }
 
             if (medusaPlugin is null)
             {

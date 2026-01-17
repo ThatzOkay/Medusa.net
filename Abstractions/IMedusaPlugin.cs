@@ -1,3 +1,4 @@
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 
@@ -11,6 +12,8 @@ public interface IMedusaPlugin
     string GameCode { get; }
     int? MinVer { get; }
     int? MaxVer { get; }
+    Encoding? ForcedEncoding { get; }
+
     Task OnBuilderInitialize(WebApplicationBuilder builder);
     Task OnAppInitialize(WebApplication app);
     Task<bool> DoesProfileExist(string cardId);
