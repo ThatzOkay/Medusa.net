@@ -21,7 +21,7 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
         var konamiId = cardService.ConvertUidToKonamiId(req.CardId);
         
         var card = new Abstractions.Entities.Card { RawId = req.CardId, KonamiId = konamiId };
-        var user = new User { Pin = int.Parse(req.Password), UserName = konamiId, Cards = [card] };
+        var user = new User { Pin = req.Password, UserName = konamiId, Cards = [card] };
         
         await userManager.CreateAsync(user);
 

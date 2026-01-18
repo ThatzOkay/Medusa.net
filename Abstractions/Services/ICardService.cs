@@ -1,4 +1,5 @@
 ﻿
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Abstractions.Entities;
 
@@ -10,5 +11,9 @@ namespace Abstractions.Services
         string ConvertKonamiIdToUid(string konamiId);
         Task<Card?> FindByKonamiId(string konamiId);
         Task<Card?> FindByCardId(string cardId);
+        Task<bool> Exists(string konamiId);
+        Task<bool> ValidatePinAsync(string konamiId, string pin);
+        Task<bool> IsRegistered(string konamiId, string pin);
+        Task<List<Card>> GetCardsByUserIdAsync(int userId);
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server;
+using Server.Api;
 using Server.Authentication;
 using Server.Extensions;
 using Server.Middlewares;
@@ -56,12 +57,13 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data S
 builder.Services.AddIdentityCore<User>(config =>
 {
     config.Password.RequiredLength = 8;
-    config.SignIn.RequireConfirmedEmail = true;
+    config.SignIn.RequireConfirmedEmail = false;
     config.Lockout.AllowedForNewUsers = true;
 }).AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddTransient<ICardService, CardService>();
 builder.Services.AddSingleton<IPluginService>(pluginService);
+builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddSingleton<IXmlLogService, XmlLogService>();
 
 var app = builder.Build();
@@ -96,7 +98,10 @@ foreach (var plugin in plugins)
     await plugin.OnAppInitialize(app);
 }
 
-app.MapIdentityApi();
+var apiGroup = app.MapGroup("/api").WithTags("API");
+apiGroup.MapCardsApiEndpoints();
+apiGroup.MapUserApiEndpoints();
+apiGroup.MapIdentityApi();
 
 var eamuseGroup = app.MapGroup("eamuse");
 

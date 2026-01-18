@@ -15,17 +15,11 @@ router.beforeEach(async (to, from, next) => {
   let store = useUserStore();
   let user = store.user;
 
-  //dont let people go back to the splash page
-  if (to.path === "/" && from.path !== "/") {
-    next(from);
-    return;
-  }
   //if the user is not logged in, redirect them to the welcome page
   const requiresAuth =
     to.meta.requiresAuth !== undefined && to.meta.requiresAuth === false;
   if (!requiresAuth && user === undefined) {
     const refreshToken = localStorage.getItem("refreshToken") as string;
-    const userId = localStorage.getItem("userId") as string;
     if (!refreshToken) {
       next("/auth");
       return;
@@ -33,12 +27,11 @@ router.beforeEach(async (to, from, next) => {
 
     //i think store gets reset when you switch between apps. So we need to rehydrate the store
     const success = await AuthenticationService.refreshAccessToken(
-      refreshToken,
-      userId
+      refreshToken
     );
 
     if (!success) {
-      next("/");
+      next("/auth");
       return;
     }
   }

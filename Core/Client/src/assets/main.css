@@ -2,7 +2,6 @@
 @import "tailwindcss";
 @import "tailwindcss-primeui";
 
-
 /* Primary and Surface Palettes */
 :root {
     --p-primary-50: #ecfdf5;

@@ -203,4 +203,24 @@ public class CardService : ICardService
     {
         return _context.Cards.Include(x => x.User).FirstOrDefaultAsync(c => c.RawId == cardId);
     }
+
+    public Task<bool> Exists(string konamiId)
+    {
+        return _context.Cards.AnyAsync(c => c.KonamiId == konamiId);
+    }
+
+    public Task<bool> ValidatePinAsync(string konamiId, string pin)
+    {
+        return _context.Cards.AnyAsync(c => c.KonamiId == konamiId && c.User.Pin == pin);
+    }
+
+    public Task<bool> IsRegistered(string konamiId, string pin)
+    {
+        return _context.Cards.AnyAsync(c => c.KonamiId == konamiId && c.User.Pin == pin && c.User.PasswordHash != null);
+    }
+
+    public Task<List<Card>> GetCardsByUserIdAsync(int userId)
+    {
+        return _context.Cards.Where(c => c.UserId == userId).ToListAsync();
+    }
 }

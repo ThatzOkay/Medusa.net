@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Abstractions.Entities;
+using Abstractions.Services;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Http.Metadata;
@@ -31,13 +32,16 @@ public static class AuthEndpoints
         // We'll figure out a unique endpoint name based on the final route pattern during endpoint generation.
         string? confirmEmailEndpointName = null;
  
-        var routeGroup = endpoints.MapGroup("");
+        var routeGroup = endpoints.MapGroup("/auth");
 
         routeGroup.MapPost("/register", async Task<Results<Ok, ValidationProblem>>
-            ([FromBody] RegisterRequest registration, HttpContext context, [FromServices] IServiceProvider sp) =>
+            ([FromBody] Models.Request.RegisterRequest registration, HttpContext context, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<User>>();
- 
+            var signinManager = sp.GetRequiredService<SignInManager<User>>();
+            var userService = sp.GetRequiredService<IUserService>();
+            var cardService = sp.GetRequiredService<ICardService>();
+
             if (!userManager.SupportsUserEmail)
             {
                 throw new NotSupportedException($"{nameof(MapIdentityApi)} requires a user store with email support.");
@@ -51,17 +55,34 @@ public static class AuthEndpoints
             {
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(email)));
             }
- 
-            var user = new User();
-            await userStore.SetUserNameAsync(user, email, CancellationToken.None);
+
+            var validCard = await cardService.ValidatePinAsync(registration.KonamiId, registration.Pin);
+
+            if (!validCard)
+            {
+                return CreateValidationProblem("InvalidCard",
+                    "The provided Card is invalid");
+            }
+
+            var user = await userService.GetUserByKonamiId(registration.KonamiId);
+
+            if (user == null)
+            {
+                return CreateValidationProblem("InvalidKonamiId",
+                    "The provided Card is not found");
+            }
+
+            await userStore.SetUserNameAsync(user, registration.Username, CancellationToken.None);
             await emailStore.SetEmailAsync(user, email, CancellationToken.None);
-            var result = await userManager.CreateAsync(user, registration.Password);
+            var result = await userManager.UpdateAsync(user);
  
             if (!result.Succeeded)
             {
                 return CreateValidationProblem(result);
             }
- 
+
+            result = await userManager.AddPasswordAsync(user, registration.Password);
+
             await SendConfirmationEmailAsync(user, userManager, context, email);
             return TypedResults.Ok();
         });
@@ -75,8 +96,16 @@ public static class AuthEndpoints
             var isPersistent = (useCookies == true) && (useSessionCookies != true);
             signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
  
-            var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, lockoutOnFailure: true);
- 
+            var user = await signInManager.UserManager.FindByEmailAsync(login.Email);
+            user ??= await signInManager.UserManager.FindByNameAsync(login.Email);
+
+            if (user == null)
+            {
+                return TypedResults.Problem("Invalid login attempt.", statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var result = await signInManager.PasswordSignInAsync(user!.UserName!, login.Password, isPersistent, lockoutOnFailure: true);
+
             if (result.RequiresTwoFactor)
             {
                 if (!string.IsNullOrEmpty(login.TwoFactorCode))
