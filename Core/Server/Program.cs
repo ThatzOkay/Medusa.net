@@ -81,6 +81,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
         var uri = new Uri(address);
         var displayAddress = $"{uri.Scheme}://{localIp}:{uri.Port}";
         Console.WriteLine($"Accessible at: {displayAddress}");
+        Console.WriteLine($"EAmuse accessible at: {displayAddress}/eamuse");
     }
 });
 
