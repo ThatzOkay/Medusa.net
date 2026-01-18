@@ -10,7 +10,7 @@ namespace Server.Handlers.Boot
     public class GetServicesHandler(IServer server, ILogger<GetServicesHandler> logger) : HandlerWithoutRequest<GetServicesResponse>
     {
         private readonly ILogger<GetServicesHandler> _logger = logger;
-        private static readonly string ListeningAddress = $"http://{IpUtils.GetLocalIPv4()}:5120";
+        private static readonly string ListeningAddress = Environment.GetEnvironmentVariable("MAIN_ADDRESS") ?? $"http://{IpUtils.GetLocalIPv4()}:5120";
         private static readonly string CommonUrl = $"{ListeningAddress}/eamuse";
 
         public override void Configure()

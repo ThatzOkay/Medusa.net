@@ -52,7 +52,13 @@ builder.Services.AddIdentityApiEndpoints<User>()
 
 builder.Services.AddHandlers();
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=Medusa.db;"));
+if (!File.Exists("database/Medusa.db"))
+{
+    Directory.CreateDirectory("database");
+    using(File.Create("database/Medusa.db")) { }
+}
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=database/Medusa.db;"));
 
 builder.Services.AddIdentityCore<User>(config =>
 {
@@ -79,7 +85,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     foreach (var address in serverAddresses.Addresses)
     {
         var uri = new Uri(address);
-        var displayAddress = $"{uri.Scheme}://{localIp}:{uri.Port}";
+        var displayAddress = Environment.GetEnvironmentVariable("MAIN_ADDRESS") ?? $"{uri.Scheme}://{localIp}:{uri.Port}";
         Console.WriteLine($"Accessible at: {displayAddress}");
         Console.WriteLine($"EAmuse accessible at: {displayAddress}/eamuse");
     }
@@ -292,6 +298,7 @@ app.MapFallbackToFile("/index.html");
 await using var scope = app.Services.CreateAsyncScope();
 
 var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
 await appDbContext.Database.MigrateAsync();
 
 app.Run();
