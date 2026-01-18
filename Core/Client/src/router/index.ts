@@ -43,7 +43,7 @@ router.beforeEach(async (to, from, next) => {
     const userId = localStorage.getItem("userId") as string;
 
     if (refreshToken && userId) {
-      await AuthenticationService.refreshAccessToken(refreshToken, userId);
+      await AuthenticationService.refreshAccessToken(refreshToken);
     }
 
     store = useUserStore();
