@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Xml;
 using Server.Attributes;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -211,7 +212,8 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         {
             // Synchronous Handle
             var result = handleMethod.Invoke(handlerInstance, parameters.ToArray());
-            responseElement = ToXElement(result);
+            if (result is not null)
+                responseElement = ToXElement(result);
         }
         else if (handleAsyncMethod != null)
         {
@@ -223,6 +225,11 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
         if (responseElement != null)
         {
+            var firstElementName = responseElement.Name;
+            if (firstElementName == "response")
+            {
+                return responseElement.Document;
+            }
             var responseDocument = new XDocument(new XElement("response", responseElement));
             return responseDocument;
         }
@@ -231,8 +238,13 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         return null;
     }
 
-    public static XElement ToXElement(object obj)
+    private static XElement ToXElement(object obj)
     {
+        if (obj is XDocument xDocument)
+        {
+            return xDocument.Root!;
+        }
+        
         var serializer = new XmlSerializer(obj.GetType());
 
         var ns = new XmlSerializerNamespaces();

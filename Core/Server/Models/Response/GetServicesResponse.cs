@@ -10,8 +10,8 @@ public class GetServicesResponse
     public int Expire { get; set; }
 
     [XmlAttribute("method")]
-    public required  string Method { get; set; }
-    
+    public required string Method { get; set; }
+
     [XmlAttribute("mode")]
     public required  string Mode { get; set; }
     

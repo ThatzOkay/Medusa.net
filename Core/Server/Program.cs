@@ -21,6 +21,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 
 var key =
@@ -115,6 +116,7 @@ var eamuseGroup = app.MapGroup("eamuse");
     eamuseGroup.MapPost("/{model}/{module}/{method}", async (string model, string module, string method,
         HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
     {
+        Console.WriteLine(httpContext.Request.Headers.UserAgent);
         // Enable buffering to allow multiple reads of the request body
         httpContext.Request.EnableBuffering();
         var body = "";
@@ -132,7 +134,7 @@ var eamuseGroup = app.MapGroup("eamuse");
 
         var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
 
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
+        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
 
         httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
 
@@ -148,6 +150,7 @@ var eamuseGroup = app.MapGroup("eamuse");
     eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
         HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
     {
+        Console.WriteLine(httpContext.Request.Headers.UserAgent);
         // Enable buffering to allow multiple reads of the request body
         httpContext.Request.EnableBuffering();
         var body = "";
@@ -172,7 +175,7 @@ var eamuseGroup = app.MapGroup("eamuse");
             amusementRequest.Method = fParts[1];
         }
 
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
+        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
 
         httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
 
@@ -188,7 +191,7 @@ var eamuseGroup = app.MapGroup("eamuse");
     eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
         HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
     {
-
+        Console.WriteLine(httpContext.Request.Headers.UserAgent);
         // Enable buffering to allow multiple reads of the request body
         httpContext.Request.EnableBuffering();
         var body = "";
@@ -213,7 +216,7 @@ var eamuseGroup = app.MapGroup("eamuse");
             amusementRequest.Method = fParts[1];
         }
 
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "ShiftJIS";
+        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
 
         httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
 
@@ -225,6 +228,17 @@ var eamuseGroup = app.MapGroup("eamuse");
 
         return TypedResults.Bytes(result, "application/octet-stream");
     });
+
+    app.MapFallbackToFile("/index.html");
+
+await using var scope = app.Services.CreateAsyncScope();
+
+var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+await appDbContext.Database.MigrateAsync();
+
+app.Run();
+return;
 
 async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, string info, bool compress, bool encrypt, bool isEncoded, string encoding, ILogger<Program> logger, IHandlerService handlerService, IPluginService pluginService)
 {
@@ -238,7 +252,7 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
     var responseXml = await handlerService.Handle(request.Model, request.Module, request.Method, document);
 
     var plugins = pluginService.GetPlugins();
-    var forcedEncoding = plugins.FirstOrDefault(p => p.GameCode == request.Model)?.ForcedEncoding;
+    var forcedEncoding = plugins.FirstOrDefault(p => p.GameCode == request.Model.Split(":")[0])?.ForcedEncoding;
 
     var encodingEnum = encoding switch
     {
@@ -292,15 +306,4 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
 
     return encodedBody;
 }
-
-app.MapFallbackToFile("/index.html");
-
-await using var scope = app.Services.CreateAsyncScope();
-
-var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-await appDbContext.Database.MigrateAsync();
-
-app.Run();
-return;
 

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting.Server;
 using System.Xml.Linq;
 using Abstractions.Handlers;
-using Abstractions.SerializationTypes;
 using Abstractions.Utils;
 using Server.Models.Response;
 
@@ -28,7 +27,7 @@ namespace Server.Handlers.Boot
         private static GetServicesResponse CreateCoreServicesElement()
         {
             var services = new GetServicesResponse()
-            {       
+            {
                 Expire = 3600,
                 Method = "get",
                 Mode = "operation",

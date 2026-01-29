@@ -7,7 +7,7 @@ namespace Server.Models.Response;
 public class GetMessageResponse
 {
     [XmlAttribute("status")]
-    public required  int Status { get; set; }
+    public required int Status { get; set; }
     
     [XmlAttribute("expire")]
     public required  int Expire { get; set; }

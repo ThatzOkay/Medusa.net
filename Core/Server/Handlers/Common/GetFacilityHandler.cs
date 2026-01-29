@@ -20,7 +20,7 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
             Location = new FacilityLocation()
             {
                 Id = new XrpcString("00000000"),
-                Country = new XrpcString("US"),
+                Country = new XrpcString("JP"),
                 Region = new XrpcString("NA"),
                 Name = new XrpcString("Medusa"),
                 Type = new XrpcULong(0)
@@ -32,7 +32,7 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
             },
             PortForward = new FacilityPortForward()
             {
-                GlobalIp = new XrpcString("127.0.0.1"),
+                GlobalIp = new XrpcIp4("127.0.0.1"),
                 GlobalPort = new XrpcULong(5246),
                 PrivatePort = new XrpcULong(5246)
             },
@@ -40,16 +40,16 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
             {
                 Flag = new XrpcULong(1),
                 Name = new XrpcString("Medusa"),
-                Latitude = new XrpcString("0.0"),
-                Longitude = new XrpcString("0.0")
+                Latitude = new XrpcString("0"),
+                Longitude = new XrpcString("0")
             },
             Share = new FacilityShare()
             {
                 EaCoin = new FacilityEaCoin()
                 {
-                    NotchAmount = new XrpcLong(3000),
-                    NotchCount = new XrpcLong(3),
-                    SupplyLimit = new XrpcLong(100000)
+                    NotchAmount = new XrpcLong((long)3000),
+                    NotchCount = new XrpcLong((long)3),
+                    SupplyLimit = new XrpcLong(1000000)
                 },
                 Url = new FacilityUrl()
                 {

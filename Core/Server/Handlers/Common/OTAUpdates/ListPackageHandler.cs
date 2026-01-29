@@ -15,6 +15,7 @@ public class ListPackageHandler: HandlerWithoutRequest<ListPackageResponse>
     {
         var package = new ListPackageResponse()
         {
+            Expire = 1200,
             Status = 0
         };
         

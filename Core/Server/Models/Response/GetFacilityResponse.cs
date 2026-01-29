@@ -9,7 +9,7 @@ public class GetFacilityResponse
 {
     [XmlAttribute("status")]
     public required int Status { get; set; }
-    
+
     [XmlElement("location")]
     public required FacilityLocation Location { get; set; }
     
@@ -56,7 +56,7 @@ public record FacilityLine
 public record FacilityPortForward
 {
     [XmlElement("globalip")]
-    public required XrpcString GlobalIp { get; set; }
+    public required XrpcIp4 GlobalIp { get; set; }
     
     [XmlElement("globalport")]
     public required XrpcULong GlobalPort { get; set; }
