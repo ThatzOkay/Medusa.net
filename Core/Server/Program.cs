@@ -116,33 +116,9 @@ var eamuseGroup = app.MapGroup("eamuse");
     eamuseGroup.MapPost("/{model}/{module}/{method}", async (string model, string module, string method,
         HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
     {
-        Console.WriteLine(httpContext.Request.Headers.UserAgent);
-        // Enable buffering to allow multiple reads of the request body
-        httpContext.Request.EnableBuffering();
-        var body = "";
-        // The body is 932 encoded xml
-        if(httpContext.Request.Body.Length != 0)
-        {
-            using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
-            body = await reader.ReadToEndAsync();
-        }
-
-        httpContext.Request.Body.Position = 0;
-
-        var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-        var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
-
         var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
 
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
-
-        httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
-
-        var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
-
-        httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
-
-        var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
+        var result = await HandleEAmuseRequest(httpContext, null, amusementRequest, logger, handlerService, pluginService);
 
         return TypedResults.Bytes(result, "application/octet-stream");
     });
@@ -150,40 +126,9 @@ var eamuseGroup = app.MapGroup("eamuse");
     eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
         HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
     {
-        Console.WriteLine(httpContext.Request.Headers.UserAgent);
-        // Enable buffering to allow multiple reads of the request body
-        httpContext.Request.EnableBuffering();
-        var body = "";
-        // The body is 932 encoded xml
-        if(httpContext.Request.Body.Length != 0)
-        {
-            using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
-            body = await reader.ReadToEndAsync();
-        }
-
-        httpContext.Request.Body.Position = 0;
-
-        var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-        var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
-
         var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
 
-        if(!string.IsNullOrEmpty(f))
-        {
-            var fParts = f.Split('.');
-            amusementRequest.Module = fParts[0];
-            amusementRequest.Method = fParts[1];
-        }
-
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
-
-        httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
-
-        var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
-
-        httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
-
-        var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
+        var result = await HandleEAmuseRequest(httpContext, f, amusementRequest, logger, handlerService, pluginService);
 
         return TypedResults.Bytes(result, "application/octet-stream");
     });
@@ -191,40 +136,9 @@ var eamuseGroup = app.MapGroup("eamuse");
     eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
         HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
     {
-        Console.WriteLine(httpContext.Request.Headers.UserAgent);
-        // Enable buffering to allow multiple reads of the request body
-        httpContext.Request.EnableBuffering();
-        var body = "";
-        // The body is 932 encoded xml
-        if(httpContext.Request.Body.Length != 0)
-        {
-            using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
-            body = await reader.ReadToEndAsync();
-        }
-
-        httpContext.Request.Body.Position = 0;
-
-        var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-        var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
-
         var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
 
-        if(!string.IsNullOrEmpty(f))
-        {
-            var fParts = f.Split('.');
-            amusementRequest.Module = fParts[0];
-            amusementRequest.Method = fParts[1];
-        }
-
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
-
-        httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
-
-        var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
-
-        httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
-
-        var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
+        var result = await HandleEAmuseRequest(httpContext, f, amusementRequest, logger, handlerService, pluginService);
 
         return TypedResults.Bytes(result, "application/octet-stream");
     });
@@ -240,8 +154,38 @@ await appDbContext.Database.MigrateAsync();
 app.Run();
 return;
 
-async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, string info, bool compress, bool encrypt, bool isEncoded, string encoding, ILogger<Program> logger, IHandlerService handlerService, IPluginService pluginService)
+async Task<byte[]> HandleEAmuseRequest(HttpContext httpContext, string? f, AmusementRequest request, ILogger<Program> logger, IHandlerService handlerService, IPluginService pluginService)
 {
+    if (!string.IsNullOrEmpty(f))
+    {
+        var fParts = f.Split('.');
+        request.Module = fParts[0];
+        request.Method = fParts[1];
+    }
+
+    // Enable buffering to allow multiple reads of the request body
+    httpContext.Request.EnableBuffering();
+    var body = "";
+    // The body is 932 encoded xml
+    if (httpContext.Request.Body.Length != 0)
+    {
+        using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
+        body = await reader.ReadToEndAsync();
+    }
+
+    httpContext.Request.Body.Position = 0;
+
+    var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
+
+    httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
+
+    var info = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
+
+    httpContext.Response.Headers.Append("X-Eamuse-Info", info);
+
+    var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
+    var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+
     logger.LogInformation("Handling {Module} {Method}", request.Module, request.Method);
 
     var document = new XDocument();
@@ -269,14 +213,14 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
         encodingEnum = forcedEncoding.ToKnownEncoding();
     }
 
-    if(request.Module == "package")
+    if(request.Module == "pcb")
     {
         logger.LogInformation("{xml}", responseXml);
     }
 
     byte[] encodedBody;
 
-    if(!isEncoded)
+    if(isEncoded == "true")
     {
         var encoder = Encoding.GetEncoding(encoding);
         encodedBody = encoder.GetBytes(responseXml.ToString());

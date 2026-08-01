@@ -36,7 +36,35 @@ public record FacilityLocation
     
     [XmlElement("region")]
     public required XrpcString Region { get; set; }
-    
+
+    [XmlElement("customercode")]
+    public required XrpcString CustomerCode { get; set; }
+
+    [XmlElement("companycode")]
+    public required XrpcString CompanyCode { get; set; }
+
+    [XmlElement("latitude")]
+    public required XrpcLong Latitude { get; set; }
+
+    [XmlElement("longitude")]
+    public required XrpcLong Longitude { get; set; }
+
+    [XmlElement("accuracy")]
+    public required XrpcULong Accuracy { get; set; }
+
+    [XmlElement("countryname")]
+    public required XrpcString CountryName { get; set; }
+
+    [XmlElement("regionname")]
+    public required XrpcString RegionName { get; set; }
+
+    [XmlElement("countryjname")]
+    public required XrpcString CountryJName { get; set; }
+
+    [XmlElement("regionjname")]
+    public required XrpcString RegionJName { get; set; }
+
+
     [XmlElement("name")]
     public required XrpcString Name { get; set; }
     
@@ -46,11 +74,17 @@ public record FacilityLocation
 
 public record FacilityLine
 {
-    [XmlElement("id")]
-    public required XrpcString Id { get; set; }
-    
     [XmlElement("class")]
     public required XrpcULong Class { get; set; }
+
+    [XmlElement("rtt")]
+    public required XrpcULong RTT { get; set; }
+
+    [XmlElement("upclass")]
+    public required XrpcULong UpClass { get; set; }
+
+    [XmlElement("id")]
+    public required XrpcString Id { get; set; }
 }
 
 public record FacilityPortForward
@@ -84,6 +118,9 @@ public record FacilityShare
 {
     [XmlElement("eacon")]
     public required FacilityEaCoin EaCoin { get; set; }
+
+    [XmlElement("eapass")]
+    public required FacilityEaPass EaPass { get; set; }
     
     [XmlElement("url")]
     public required FacilityUrl Url { get; set; }
@@ -100,6 +137,11 @@ public record FacilityEaCoin
     [XmlElement("supplylimit")]
     public required XrpcLong SupplyLimit { get; set; }
     
+}
+
+public record FacilityEaPass
+{
+    public required XrpcULong Valid { get; set; }
 }
 
 public record FacilityUrl

@@ -44,7 +44,7 @@ namespace Server.Handlers.Boot
         "cardmng", "facility", "message", "numbering", "package", "pcbevent", "pcbtracker", "pkglist",
         "posevent", "userdata", "userid", "eacoin", "dlstatus", "netlog", "info", "reference", "sidmgr",
         "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
-        "slobby", "sglobby", "eacharge"
+        "slobby", "sglobby", "eacharge", "ins", "package2", "gacha", "mst", "usr"
     };
 
             foreach(var service in coreServices)

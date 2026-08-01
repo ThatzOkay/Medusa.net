@@ -1,11 +1,14 @@
 using Abstractions.Handlers;
 using Abstractions.SerializationTypes;
+using Abstractions.Utils;
 using Server.Models.Response;
 
 namespace Server.Handlers.Common;
 
 public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
 {
+    private static readonly string ListeningAddress = IpUtils.GetLocalIPv4() ?? "";
+
     public override void Configure()
     {
         Module("facility");
@@ -21,18 +24,29 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
             {
                 Id = new XrpcString("00000000"),
                 Country = new XrpcString("JP"),
-                Region = new XrpcString("NA"),
+                Region = new XrpcString("JP-13"),
+                CustomerCode = new XrpcString("X000000001"),
+                CompanyCode = new XrpcString("X000000001"),
+                Latitude = new XrpcLong((long)0),
+                Longitude = new XrpcLong((long)0),
+                Accuracy = new XrpcULong(0),
+                CountryName = new XrpcString("Japan"),
+                RegionName = new XrpcString("Tokyo"),
+                CountryJName = new XrpcString("日本国"),
+                RegionJName = new XrpcString("東京都"),
                 Name = new XrpcString("Medusa"),
-                Type = new XrpcULong(0)
+                Type = new XrpcULong(255)
             },
             Line = new FacilityLine()
             {
-                Id = new XrpcString("1"),
-                Class = new XrpcULong(0)
+                Class = new XrpcULong(8),
+                RTT = new XrpcULong(500),
+                UpClass = new XrpcULong(8),
+                Id = new XrpcString("1")
             },
             PortForward = new FacilityPortForward()
             {
-                GlobalIp = new XrpcIp4("127.0.0.1"),
+                GlobalIp = new XrpcIp4(ListeningAddress),
                 GlobalPort = new XrpcULong(5246),
                 PrivatePort = new XrpcULong(5246)
             },
@@ -49,7 +63,11 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
                 {
                     NotchAmount = new XrpcLong((long)3000),
                     NotchCount = new XrpcLong((long)3),
-                    SupplyLimit = new XrpcLong(1000000)
+                    SupplyLimit = new XrpcLong(9999)
+                },
+                EaPass = new FacilityEaPass()
+                {
+                    Valid = new XrpcULong(365)
                 },
                 Url = new FacilityUrl()
                 {
