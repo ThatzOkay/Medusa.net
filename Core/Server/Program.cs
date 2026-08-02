@@ -141,6 +141,8 @@ var eamuseGroup = app.MapGroup("eamuse");
         var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
 
         httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
+        httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
+        httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
 
         var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
 
@@ -182,6 +184,8 @@ var eamuseGroup = app.MapGroup("eamuse");
         var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
 
         httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
+        httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
+        httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
 
         var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
 
@@ -223,6 +227,8 @@ var eamuseGroup = app.MapGroup("eamuse");
         var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
 
         httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
+        httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
+        httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
 
         var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
 
@@ -268,12 +274,7 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
     {
         encodingEnum = forcedEncoding.ToKnownEncoding();
     }
-
-    if(request.Module == "package")
-    {
-        logger.LogInformation("{xml}", responseXml);
-    }
-
+    
     byte[] encodedBody;
 
     if(!isEncoded)
@@ -284,12 +285,8 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
     else
     {
         encodedBody = KbinConverter.Write(responseXml, encodingEnum);
-
-        if(request.Module == "package")
-        {
-            File.WriteAllBytes("test.bin", encodedBody);
-        }
     }
+    
     if(compress)
     {
         encodedBody = LZ77.CompressEmpty(encodedBody);

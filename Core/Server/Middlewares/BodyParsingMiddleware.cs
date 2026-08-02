@@ -69,6 +69,7 @@ public class BodyParsingMiddleware(RequestDelegate next)
         try
         {
             returnData = KbinConverter.ReadXmlLinq(data);
+            context.Request.Headers.Append("IsEncoded", "true");
         }
         catch(Exception e)
         {
