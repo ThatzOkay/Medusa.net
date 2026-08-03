@@ -28,8 +28,8 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
         var getRefId = new GetRefIdResponse()
         {
             Status = 0,
-            DataId = konamiId,
-            ReferenceId = konamiId
+            DataId = card.RawId,
+            ReferenceId = user.Id.ToString()
         };
         
         return getRefId;

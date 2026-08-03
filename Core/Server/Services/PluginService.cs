@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using Abstractions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Server.Services;
 
@@ -8,6 +9,12 @@ public class PluginService(ILogger logger) : IPluginService
 {
     private List<IMedusaPlugin> Plugins { get; } = [];
     private readonly string _pluginPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins") ;
+    private IServiceProvider? _serviceProvider;
+
+    public void SetServiceProvider(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
 
     public void AddPlugin(IMedusaPlugin plugin)
     {
@@ -78,5 +85,26 @@ public class PluginService(ILogger logger) : IPluginService
         if (maxVer != null)
             foundPlugins = foundPlugins.Where(x => x.MaxVer >= maxVer);
         return foundPlugins.FirstOrDefault();
+    }
+
+    public async Task<bool> DoesProfileExistAsync(IMedusaPlugin plugin, string cardId)
+    {
+        if (_serviceProvider is null)
+            throw new InvalidOperationException("PluginService has not been initialized with a service provider yet.");
+
+        var method = plugin.DoesProfileExist;
+        var parameters = method.Method.GetParameters();
+
+        using var scope = _serviceProvider.CreateScope();
+
+        var args = parameters.Select(p =>
+        {
+            if (p.Name == "cardId") return (object)cardId;
+            var isFromServices = p.GetCustomAttribute<FromServicesAttribute>() != null;
+            if (isFromServices) return scope.ServiceProvider.GetRequiredService(p.ParameterType);
+            throw new InvalidOperationException($"Don't know how to resolve parameter '{p.Name}' on plugin delegate DoesProfileExist");
+        }).ToArray();
+
+        return await (Task<bool>)method.DynamicInvoke(args)!;
     }
 }

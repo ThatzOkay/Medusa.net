@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -16,5 +17,6 @@ public interface IMedusaPlugin
 
     Task OnBuilderInitialize(WebApplicationBuilder builder);
     Task OnAppInitialize(WebApplication app);
-    Task<bool> DoesProfileExist(string cardId);
+    Delegate DoesProfileExist { get; }
+    
 }

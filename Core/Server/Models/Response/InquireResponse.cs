@@ -32,4 +32,7 @@ public class InquireResponse
     
     [XmlAttribute("useridflag")]
     public string UserIdFlag { get; set; } = "";
+    
+    [XmlAttribute("pcode")]
+    public string Pcode { get; set; } = "";
 }

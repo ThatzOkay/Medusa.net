@@ -18,7 +18,9 @@ public class AuthPassCardManegementHandler(ICardService cardService) : Handler<A
     public override async Task<AuthPassResponse> HandleAsync(AuthPassRequest req, string model)
     {
         var status = 0;
-        var card = await cardService.FindByKonamiId(req.ReferenceId);
+
+        var id = req.ReferenceId.TrimStart();
+        var card = await cardService.FindById(int.Parse(id)!);
 
         if (card is null)
         {

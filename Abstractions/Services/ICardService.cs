@@ -11,6 +11,7 @@ namespace Abstractions.Services
         string ConvertKonamiIdToUid(string konamiId);
         Task<Card?> FindByKonamiId(string konamiId);
         Task<Card?> FindByCardId(string cardId);
+        Task<Card?> FindById(int parse);
         Task<bool> Exists(string konamiId);
         Task<bool> ValidatePinAsync(string konamiId, string pin);
         Task<bool> IsRegistered(string konamiId, string pin);

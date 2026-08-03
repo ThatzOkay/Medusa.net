@@ -75,6 +75,8 @@ builder.Services.AddSingleton<IXmlLogService, XmlLogService>();
 
 var app = builder.Build();
 
+pluginService.SetServiceProvider(app.Services);
+
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     var serverAddresses = app.Services.GetRequiredService<IServer>()

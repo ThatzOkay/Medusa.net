@@ -8,4 +8,5 @@ public interface IPluginService
     void RegisterPlugins();
     List<IMedusaPlugin> GetPlugins();
     IMedusaPlugin? FindPlugin(string gameCode, int? minVer = null, int? maxVer = null);
+    Task<bool> DoesProfileExistAsync(IMedusaPlugin plugin, string cardId);
 }

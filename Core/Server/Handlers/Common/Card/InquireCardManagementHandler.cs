@@ -55,9 +55,9 @@ public class InquireCardManagementHandler(IPluginService pluginService, ICardSer
             inquireResponse.Status = 113;
             return inquireResponse;
         }
-        
-        var profileExists = await plugin!.DoesProfileExist(cardId);
-            
+
+        var profileExists = await pluginService.DoesProfileExistAsync(plugin, cardId);
+
         var userIdFlag = profileExists ? "1" : "0";
         var extIdFlag = profileExists ? "1" : "0";
         var newFlag = profileExists ? "0" : "1";
@@ -68,8 +68,9 @@ public class InquireCardManagementHandler(IPluginService pluginService, ICardSer
         inquireResponse.Expired = 0;
         inquireResponse.NewFlag = newFlag;
         inquireResponse.ExtidFlag = extIdFlag;
-        inquireResponse.RefId = konamiId;
+        inquireResponse.RefId = exisitngCard.Id.ToString().PadLeft(16, '0');
         inquireResponse.UserIdFlag = userIdFlag;
+        inquireResponse.Pcode = konamiId;
         
         return inquireResponse;
     }

@@ -204,6 +204,11 @@ public class CardService : ICardService
         return _context.Cards.Include(x => x.User).FirstOrDefaultAsync(c => c.RawId == cardId);
     }
 
+    public Task<Card?> FindById(int id)
+    {
+        return _context.Cards.Include(c => c.User).FirstOrDefaultAsync(x => x.Id == id);
+    }
+
     public Task<bool> Exists(string konamiId)
     {
         return _context.Cards.AnyAsync(c => c.KonamiId == konamiId);

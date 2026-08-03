@@ -56,7 +56,7 @@ namespace Server.Handlers.Common.Card
                 return inquireResponse;
             }
 
-            var profileExists = await plugin!.DoesProfileExist(cardId);
+            var profileExists = await pluginService.DoesProfileExistAsync(plugin, cardId);
 
             var userIdFlag = profileExists ? "1" : "0";
             var extIdFlag = profileExists ? "1" : "0";
