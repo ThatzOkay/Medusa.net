@@ -23,6 +23,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using Scalar.AspNetCore;
+using Server.GraphQL;
+using Server.Plugins;
 
 var key =
     Convert.FromHexString("00000000000069D74627D985EE2187161570D08D93B12455035B6DF0D8205DF5");
@@ -34,19 +37,6 @@ var builder = WebApplication.CreateBuilder(args);
 var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
 var logger = loggerFactory.CreateLogger("MedusaLogger");
 
-var pluginService = new PluginService(logger);
-
-// Add services to the container.
-
-pluginService.RegisterPlugins();
-
-var plugins = pluginService.GetPlugins();
-
-foreach (var plugin in plugins)
-{
-    await plugin.OnBuilderInitialize(builder);
-}
-
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<User>()
     .AddEntityFrameworkStores<AppDbContext>();
@@ -56,7 +46,9 @@ builder.Services.AddHandlers();
 if (!File.Exists("database/Medusa.db"))
 {
     Directory.CreateDirectory("database");
-    using(File.Create("database/Medusa.db")) { }
+    await using (File.Create("database/Medusa.db"))
+    {
+    }
 }
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=database/Medusa.db;"));
@@ -68,14 +60,49 @@ builder.Services.AddIdentityCore<User>(config =>
     config.Lockout.AllowedForNewUsers = true;
 }).AddEntityFrameworkStores<AppDbContext>();
 
-builder.Services.AddTransient<ICardService, CardService>();
+builder.Services.AddMemoryCache();
+
+var graphQlService = builder.Services.AddGraphQLServer();
+
+graphQlService
+    .RegisterDbContextFactory<AppDbContext>()
+    .AddAuthorization()
+    .AddQueryType<Query>()
+    .AddTypeExtensionsInNamespaceOf<Query>()
+    .AddMutationType<Mutation>()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting()
+    .UseAutomaticPersistedOperationPipeline()
+    .AddInMemoryOperationDocumentStorage()
+    .AddCacheControl()
+    .ModifyCostOptions(o =>
+    {
+        o.MaxFieldCost = 50000;
+        o.MaxTypeCost = 50000;
+    });
+;
+
+builder.Services.AddOpenApi("v1");
+
+// Create plugin infrastructure manually so DiscoverPluginsAsync can call
+// OnBuilderInitialize before the DI container is sealed by builder.Build().
+var pluginRegistry = new PluginRegistry();
+var pluginService = new PluginService(logger, pluginRegistry);
+builder.Services.AddSingleton(pluginRegistry);
 builder.Services.AddSingleton<IPluginService>(pluginService);
+builder.Services.AddHostedService<PluginWatcher>();
+
+await pluginService.DiscoverPluginsAsync(builder);
+
+builder.Services.AddTransient<ICardService, CardService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddSingleton<IXmlLogService, XmlLogService>();
 
 var app = builder.Build();
 
 pluginService.SetServiceProvider(app.Services);
+await pluginService.ActivatePluginsAsync(app);
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -88,7 +115,8 @@ app.Lifetime.ApplicationStarted.Register(() =>
     foreach (var address in serverAddresses.Addresses)
     {
         var uri = new Uri(address);
-        var displayAddress = Environment.GetEnvironmentVariable("MAIN_ADDRESS") ?? $"{uri.Scheme}://{localIp}:{uri.Port}";
+        var displayAddress = Environment.GetEnvironmentVariable("MAIN_ADDRESS") ??
+                             $"{uri.Scheme}://{localIp}:{uri.Port}";
         Console.WriteLine($"Accessible at: {displayAddress}");
         Console.WriteLine($"EAmuse accessible at: {displayAddress}/eamuse");
     }
@@ -100,13 +128,15 @@ app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 
 //app.UseHttpsRedirection();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapScalarApiReference(o => o.AddDocument("v1"));
+    app.MapOpenApi();
+}
+
 app.UseMiddleware<BodyParsingMiddleware>();
 app.UseHandlers();
-
-foreach (var plugin in plugins)
-{
-    await plugin.OnAppInitialize(app);
-}
 
 var apiGroup = app.MapGroup("/api").WithTags("API");
 apiGroup.MapCardsApiEndpoints();
@@ -115,129 +145,39 @@ apiGroup.MapIdentityApi();
 
 var eamuseGroup = app.MapGroup("eamuse");
 
-    eamuseGroup.MapPost("/{model}/{module}/{method}", async (string model, string module, string method,
-        HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
-    {
-        Console.WriteLine(httpContext.Request.Headers.UserAgent);
-        // Enable buffering to allow multiple reads of the request body
-        httpContext.Request.EnableBuffering();
-        var body = "";
-        // The body is 932 encoded xml
-        if(httpContext.Request.Body.Length != 0)
-        {
-            using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
-            body = await reader.ReadToEndAsync();
-        }
+eamuseGroup.MapPost("/{model}/{module}/{method}", (string model, string module, string method,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService,
+    [FromServices] IPluginService pluginService) =>
+{
+    var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
 
-        httpContext.Request.Body.Position = 0;
+    return HandleEAmuseRoute(amusementRequest, httpContext, logger, handlerService, pluginService);
+});
 
-        var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-        var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+eamuseGroup.MapPost("/{m}", (string m, [FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method,
+    [FromQuery] string? f,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService,
+    [FromServices] IPluginService pluginService) =>
+{
+    var amusementRequest = BuildAmusementRequest(model, module, method, f);
 
-        var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
+    return HandleEAmuseRoute(amusementRequest, httpContext, logger, handlerService, pluginService);
+});
 
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
+eamuseGroup.MapPost("/", ([FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method,
+    [FromQuery] string? f,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService,
+    [FromServices] IPluginService pluginService) =>
+{
+    var amusementRequest = BuildAmusementRequest(model, module, method, f);
 
-        httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
+    return HandleEAmuseRoute(amusementRequest, httpContext, logger, handlerService, pluginService);
+});
 
-        var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
+var graphqlMap = app.MapGraphQL();
 
-        httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
-        httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
-        httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
+app.MapFallbackToFile("/index.html");
 
-        var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
-
-        return TypedResults.Bytes(result, "application/octet-stream");
-    });
-
-    eamuseGroup.MapPost("/{m}", async (string m, [FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
-        HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
-    {
-        Console.WriteLine(httpContext.Request.Headers.UserAgent);
-        // Enable buffering to allow multiple reads of the request body
-        httpContext.Request.EnableBuffering();
-        var body = "";
-        // The body is 932 encoded xml
-        if(httpContext.Request.Body.Length != 0)
-        {
-            using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
-            body = await reader.ReadToEndAsync();
-        }
-
-        httpContext.Request.Body.Position = 0;
-
-        var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-        var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
-
-        var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
-
-        if(!string.IsNullOrEmpty(f))
-        {
-            var fParts = f.Split('.');
-            amusementRequest.Module = fParts[0];
-            amusementRequest.Method = fParts[1];
-        }
-
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
-
-        httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
-
-        var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
-
-        httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
-        httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
-        httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
-
-        var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
-
-        return TypedResults.Bytes(result, "application/octet-stream");
-    });
-
-    eamuseGroup.MapPost("/", async ([FromQuery] string model, [FromQuery] string? module, [FromQuery] string? method, [FromQuery] string? f,
-        HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService, [FromServices] IPluginService pluginService) =>
-    {
-        Console.WriteLine(httpContext.Request.Headers.UserAgent);
-        // Enable buffering to allow multiple reads of the request body
-        httpContext.Request.EnableBuffering();
-        var body = "";
-        // The body is 932 encoded xml
-        if(httpContext.Request.Body.Length != 0)
-        {
-            using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
-            body = await reader.ReadToEndAsync();
-        }
-
-        httpContext.Request.Body.Position = 0;
-
-        var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
-        var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
-
-        var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
-
-        if(!string.IsNullOrEmpty(f))
-        {
-            var fParts = f.Split('.');
-            amusementRequest.Module = fParts[0];
-            amusementRequest.Method = fParts[1];
-        }
-
-        var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
-
-        httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
-
-        var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
-
-        httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
-        httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
-        httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
-
-        var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true", encoding, logger, handlerService, pluginService);
-
-        return TypedResults.Bytes(result, "application/octet-stream");
-    });
-
-    app.MapFallbackToFile("/index.html");
 
 await using var scope = app.Services.CreateAsyncScope();
 
@@ -248,13 +188,63 @@ await appDbContext.Database.MigrateAsync();
 app.Run();
 return;
 
-async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, string info, bool compress, bool encrypt, bool isEncoded, string encoding, ILogger<Program> logger, IHandlerService handlerService, IPluginService pluginService)
+AmusementRequest BuildAmusementRequest(string model, string? module, string? method, string? f)
+{
+    var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
+
+    if (string.IsNullOrEmpty(f)) return amusementRequest;
+
+    var fParts = f.Split('.');
+    amusementRequest.Module = fParts[0];
+    amusementRequest.Method = fParts[1];
+
+    return amusementRequest;
+}
+
+async Task<IResult> HandleEAmuseRoute(AmusementRequest amusementRequest, HttpContext httpContext,
+    ILogger<Program> logger, IHandlerService handlerService, IPluginService pluginService)
+{
+    Console.WriteLine(httpContext.Request.Headers.UserAgent);
+    // Enable buffering to allow multiple reads of the request body
+    httpContext.Request.EnableBuffering();
+    var body = "";
+    // The body is 932 encoded xml
+    if (httpContext.Request.Body.Length != 0)
+    {
+        using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
+        body = await reader.ReadToEndAsync();
+    }
+
+    httpContext.Request.Body.Position = 0;
+
+    var compress = httpContext.Request.Headers["X-Compress"].ToString().Contains("lz77");
+    var encrypt = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() is not null;
+
+    var encoding = httpContext.Items["Encoding"]?.ToString() ?? "SHIFT_JIS";
+
+    httpContext.Request.Headers.TryGetValue("IsEncoded", out var isEncoded);
+
+    var originalInfo = httpContext.Request.Headers["X-Eamuse-Info"].FirstOrDefault() ?? "";
+
+    httpContext.Response.Headers.Append("X-Eamuse-Info", originalInfo);
+    httpContext.Response.Headers.Append("X-Compress", compress ? "lz77" : "none");
+    httpContext.Response.Headers.Append("User-Agent", "EAMUSE.Httpac/1.0");
+
+    var result = await HandleEAmuseRequest(amusementRequest, body, originalInfo, compress, encrypt, isEncoded == "true",
+        encoding, logger, handlerService, pluginService);
+
+    return TypedResults.Bytes(result, "application/octet-stream");
+}
+
+async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, string info, bool compress, bool encrypt,
+    bool isEncoded, string encoding, ILogger<Program> logger, IHandlerService handlerService,
+    IPluginService pluginService)
 {
     logger.LogInformation("Handling {Module} {Method}", request.Module, request.Method);
 
     var document = new XDocument();
 
-    if(!string.IsNullOrEmpty(body))
+    if (!string.IsNullOrEmpty(body))
         document = XDocument.Parse(body);
 
     var responseXml = await handlerService.Handle(request.Model, request.Module, request.Method, document);
@@ -272,14 +262,14 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
         _ => throw new ArgumentException($"Unknown encoding: {encoding}")
     };
 
-    if(forcedEncoding is not null)
+    if (forcedEncoding is not null)
     {
         encodingEnum = forcedEncoding.ToKnownEncoding();
     }
-    
+
     byte[] encodedBody;
 
-    if(!isEncoded)
+    if (!isEncoded)
     {
         var encoder = Encoding.GetEncoding(encoding);
         encodedBody = encoder.GetBytes(responseXml.ToString());
@@ -288,21 +278,20 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
     {
         encodedBody = KbinConverter.Write(responseXml, encodingEnum);
     }
-    
-    if(compress)
+
+    if (compress)
     {
         encodedBody = LZ77.CompressEmpty(encodedBody);
     }
 
     var originalInfo = info.Split('-');
 
-    if(!encrypt) return encodedBody;
+    if (!encrypt) return encodedBody;
     var part = Convert.FromHexString((originalInfo[1] + originalInfo[2]));
-    for(var i = 0; i < 6; i++)
+    for (var i = 0; i < 6; i++)
         key[i] = part[i];
     var rc4Key = MD5.HashData(key);
     encodedBody = RC4.Encrypt(rc4Key, encodedBody);
 
     return encodedBody;
 }
-

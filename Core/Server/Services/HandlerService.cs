@@ -5,10 +5,11 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using Abstractions.Handlers;
 using Abstractions.Services;
+using Server.Plugins;
 
 namespace Server.Services;
 
-public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<HandlerService> logger, IXmlLogService xmlLogService) : IHandlerService
+public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<HandlerService> logger, IXmlLogService xmlLogService, PluginRegistry pluginRegistry) : IHandlerService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
     private readonly ILogger<HandlerService> _logger = logger;
@@ -17,6 +18,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
     public async Task<XDocument> Handle(string model, string module, string method, XDocument body)
     {
+        // ── Built-in server handlers (host SP) ──────────────────────────────
         foreach(var handler in Handlers)
         {
             //Module and service are on the attribute
@@ -24,7 +26,8 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
             if(handlerAttribute is null)
             {
-                var response = await HandleInheritanceClass(handler, model, module, method, body);
+                await using var hostScope = _serviceScopeFactory.CreateAsyncScope();
+                var response = await HandleInheritanceClass(handler, model, module, method, body, hostScope.ServiceProvider);
 
                 if(response is not null)
                 {
@@ -48,8 +51,22 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
                 : (IHandler)ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler);
 
             var document = new XDocument();//await handlerInstance.HandleAsync(model);
-            
+
             return document;
+        }
+
+        // ── Plugin handlers (composite SP: plugin first → host fallback) ────
+        foreach (var slot in pluginRegistry.GetSlots())
+        {
+            await using var hostScope = _serviceScopeFactory.CreateAsyncScope();
+            await using var pluginScope = slot.PluginServices.CreateAsyncScope();
+            var composite = new PluginServiceProvider(pluginScope.ServiceProvider, hostScope.ServiceProvider);
+
+            foreach (var handlerType in slot.HandlerTypes)
+            {
+                var result = await HandleInheritanceClass(handlerType, model, module, method, body, composite);
+                if (result is not null) return result;
+            }
         }
 
         //If no handler is found return an empty document
@@ -58,10 +75,9 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         return new XDocument();
     }
 
-    private async Task<XDocument?> HandleInheritanceClass(Type handler, string model, string module, string method, XDocument body)
+    private async Task<XDocument?> HandleInheritanceClass(Type handler, string model, string module, string method, XDocument body, IServiceProvider serviceProvider)
     {
         var isHandlerWithoutRequest = false;
-        await using var scope = _serviceScopeFactory.CreateAsyncScope();
 
         var requiredXdocumentConstructor = handler.GetConstructors()
             .Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(XDocument)));
@@ -71,7 +87,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
             throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
         }
 
-        if(ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler) is not BaseHandler handlerInstance)
+        if(ActivatorUtilities.CreateInstance(serviceProvider, handler) is not BaseHandler handlerInstance)
         {
             return null;
         }
