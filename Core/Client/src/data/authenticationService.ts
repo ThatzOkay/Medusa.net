@@ -5,6 +5,12 @@ import type { TokenResponse } from "@/types/tokenResponse";
 import { UserService } from "./userService";
 
 export class AuthenticationService {
+  
+  static setAccessToken(accessToken: string): void {
+    const store = useUserStore();
+    store.setAccessToken(accessToken);
+  }
+
   static async refreshAccessToken(refreshToken: string) {
     const store = useUserStore();
     const response = await fetch("/api/auth/refresh", {

@@ -1,26 +1,29 @@
 import './assets/main.css'
-import 'primeicons/primeicons.css'
 
 import { createApp } from 'vue'
-import PrimeVue from 'primevue/config';
 import App from './App.vue'
 import { createPinia } from 'pinia';
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import { DefaultApolloClient } from '@vue/apollo-composable';
+import { graphqlClient } from '@/data/graphqlClient';
 import router from './router';
-import { addIcons, OhVueIcon } from 'oh-vue-icons';
 
 const app = createApp(App);
 
 const pinia = createPinia();
 
-app.use(PrimeVue, {
-    unstyled: true
-}).use(pinia)
-  .use(router);
+app.use(pinia)
+  .use(VueQueryPlugin)
+  .use(router)
+  .provide(DefaultApolloClient, graphqlClient.client);
 
-
-addIcons();
-
-app.component("oh-vue-icon", OhVueIcon);
+// tailwind-material-3 uses Tailwind's class-based dark mode strategy but has
+// no built-in toggle of its own — follow the system preference, matching the
+// app's previous `@media (prefers-color-scheme: dark)`-only behavior.
+const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+const syncDarkClass = (isDark: boolean) => document.documentElement.classList.toggle('dark', isDark);
+syncDarkClass(darkModeQuery.matches);
+darkModeQuery.addEventListener('change', (event) => syncDarkClass(event.matches));
 
 router.isReady().then(() => {
   app.mount('#app');

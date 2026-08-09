@@ -1,4 +1,4 @@
-export type Card = {
+export type MedusaCard = {
     konamiId: string;
     rawId: string;
     userId: number;

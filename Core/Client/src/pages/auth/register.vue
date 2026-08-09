@@ -1,14 +1,15 @@
   <script setup lang="ts">
-  import { Form, type FormSubmitEvent } from '@primevue/forms';
-  import Card from '@/volt/Card.vue';
-  import Button from '@/volt/Button.vue';
-  import Message from '@/volt/Message.vue';
-  import InputText from "@/volt/InputText.vue";
+  import { useForm, Field } from 'vee-validate';
+  import { toTypedSchema } from '@vee-validate/yup';
+  import Card from '@/components/ui/Card.vue';
+  import Button from '@/components/ui/Button.vue';
+  import Message from '@/components/ui/Message.vue';
+  import TextField from '@/components/ui/TextField.vue';
   import { useRouter } from 'vue-router';
   import * as yup from 'yup';
-  import { yupResolver } from '@primevue/forms/resolvers/yup';
   import { ref } from 'vue';
   import { AuthenticationService } from '@/data/authenticationService';
+  import {usePostApiAuthRegister} from "@/data/apiClient.ts";
 
   definePage({
     meta: {
@@ -17,11 +18,12 @@
   })
 
   const router = useRouter();
+  const registerMutation = usePostApiAuthRegister();
 
   const loading = ref(false);
   const cardResponse = ref<{ success: boolean; message: string }>({ success: false, message: 'Waiting for card' });
 
-  const resolver = yupResolver(
+  const schema = toTypedSchema(
     yup.object({
       cardNumber: yup.string().length(16, 'Card number must be 16 digits').required('Card number is required')
         .test('validate-card', '', async function (value) {
@@ -69,20 +71,44 @@
     return response.json();
   };
 
-  const onFormSubmit = async (event: FormSubmitEvent<Record<string, any>>) => {
+  const { handleSubmit } = useForm({ validationSchema: schema });
+
+  const onFormSubmit = handleSubmit(async (values) => {
     loading.value = true;
-    console.log('Form Submitted', event);
-    if (!event.valid) {
+    console.log('Form Submitted', values);
+
+    try {
+      await registerMutation.mutateAsync({
+        data: {
+          konamiId : values.cardNumber,
+          pin : values.pinCode,
+          username: values.username,
+          email: values.email,
+          password: values.password
+        }
+      })
+
+      const loginResult = await AuthenticationService.login({
+        email: values.email,
+        password: values.password,
+        twoFactorCode: undefined,
+        twoFactorRecoveryCode: undefined,
+      });
+
+      if (loginResult.incorrectCredentials) {
+        loading.value = false;
+        router.push('/auth');
+        return;
+      }
+
+    } catch (error) {
+      console.log(error);
       loading.value = false;
-      return;
-    }
-    const result = await AuthenticationService.registerUser(event.values.cardNumber, event.values.pinCode, event.values.username, event.values.email, event.values.password);
-    loading.value = false;
-    if (result) {
-      router.push('/auth/login');
     }
 
-  };
+    loading.value = false;
+    router.push('/');
+  });
 
 </script>
 
@@ -92,64 +118,65 @@
   </route>
 
   <template>
-    <div>
-      <Card class="p-24 pt-16 pb-16">
+      <Card class="p-24 pt-16 pb-16 w-3xl">
         <template #title>Register</template>
 
         <template #content>
-          <Form v-slot="$form" class="flex flex-col gap-4" :resolver="resolver" :validate-on-value-update="true"
-            @submit="onFormSubmit">
+          <form class="flex flex-col gap-4" @submit="onFormSubmit">
             <div class="flex gap-4">
-              <div class="flex flex-col gap-2">
+              <div class="flex flex-col gap-2 flex-1 min-w-0">
                 <label for="cardNumber">16 digit Card Number</label>
-                <InputText id="cardNumber" name="cardNumber" />
-                <Message v-if="$form.cardNumber?.invalid" severity="error" size="small" variant="simple">{{
-                  $form.cardNumber.error.message }}</Message>
+                <Field name="cardNumber" v-slot="{ field, errorMessage }" as="div">
+                  <TextField id="cardNumber" v-bind="field" :invalid="!!errorMessage" />
+                  <Message v-if="errorMessage" severity="error" size="small" variant="simple" class="mt-1">{{ errorMessage }}</Message>
+                </Field>
               </div>
-              <div class="flex flex-col gap-2">
+              <div class="flex flex-col gap-2 flex-1 min-w-0">
                 <label for="pinCode">Pin code</label>
-                <InputText id="pinCode" name="pinCode" :format="false" />
-                <Message v-if="$form.pinCode?.invalid" severity="error" size="small" variant="simple">{{
-                  $form.pinCode.error.message }}</Message>
+                <Field name="pinCode" v-slot="{ field, errorMessage }" as="div">
+                  <TextField id="pinCode" v-bind="field" :invalid="!!errorMessage" />
+                  <Message v-if="errorMessage" severity="error" size="small" variant="simple" class="mt-1">{{ errorMessage }}</Message>
+                </Field>
               </div>
             </div>
             <Message :severity="cardResponse?.success ? 'success' : 'warn'">{{ cardResponse?.message }}</Message>
             <div class="flex flex-col gap-2">
               <label for="username">Username</label>
-              <InputText id="username" name="username" />
-              <Message v-if="$form.username?.invalid" severity="error" size="small" variant="simple">{{
-                $form.username.error.message }}</Message>
+              <Field name="username" v-slot="{ field, errorMessage }" as="div">
+                <TextField id="username" v-bind="field" :invalid="!!errorMessage" />
+                <Message v-if="errorMessage" severity="error" size="small" variant="simple" class="mt-1">{{ errorMessage }}</Message>
+              </Field>
             </div>
             <div class="flex flex-col gap-2">
               <label for="email">Email</label>
-              <InputText id="email" name="email" />
-              <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">{{
-                $form.email.error.message }}</Message>
+              <Field name="email" v-slot="{ field, errorMessage }" as="div">
+                <TextField id="email" v-bind="field" :invalid="!!errorMessage" />
+                <Message v-if="errorMessage" severity="error" size="small" variant="simple" class="mt-1">{{ errorMessage }}</Message>
+              </Field>
             </div>
             <div class="flex gap-4">
-              <div class="flex flex-col gap-2">
+              <div class="flex flex-col gap-2 flex-1 min-w-0">
                 <label for="password">Password</label>
-                <InputText id="password" type="password" name="password" />
-                <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">{{
-                  $form.password.error.message }}</Message>
+                <Field name="password" v-slot="{ field, errorMessage }" as="div">
+                  <TextField id="password" type="password" v-bind="field" :invalid="!!errorMessage" />
+                  <Message v-if="errorMessage" severity="error" size="small" variant="simple" class="mt-1">{{ errorMessage }}</Message>
+                </Field>
               </div>
-              <div class="flex flex-col gap-2">
+              <div class="flex flex-col gap-2 flex-1 min-w-0">
                 <label for="passwordConfirmation">Confirm Password</label>
-                <InputText type="password" id="passwordConfirmation" name="passwordConfirmation" />
-                <Message v-if="$form.passwordConfirmation?.invalid" severity="error" size="small" variant="simple">{{
-                  $form.passwordConfirmation.error.message }}</Message>
+                <Field name="passwordConfirmation" v-slot="{ field, errorMessage }" as="div">
+                  <TextField type="password" id="passwordConfirmation" v-bind="field" :invalid="!!errorMessage" />
+                  <Message v-if="errorMessage" severity="error" size="small" variant="simple" class="mt-1">{{ errorMessage }}</Message>
+                </Field>
               </div>
             </div>
             <div class="flex justify-between w-full">
               <div class="flex gap-4 mt-1 w-full">
-                <Button @click="() => router.push('/auth/login')" label="Login" severity="secondary" variant="outlined"
-                  class="w-full" />
-                <Button :loading="loading" type="submit" label="Register" class="w-full" loading-icon="ProgressSpinner">Register</Button>
+                <Button type="button" variant="outlined" class="w-full" @click="() => router.push('/auth/login')">Login</Button>
+                <Button :loading="loading" type="submit" class="w-full">Register</Button>
               </div>
             </div>
-          </Form>
+          </form>
         </template>
-
       </Card>
-    </div>
   </template>

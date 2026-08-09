@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store/userStore';
-import Menu from '@/volt/Menu.vue';
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import NavList, { type NavListItem } from '@/components/ui/NavList.vue';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
-const items = ref([
-    { label: 'Home', icon: 'pi pi-home' , command: () => router.push('/') },
-    { label: 'Card management', icon: 'pi pi-id-card' , command: () => router.push('/cards') },
-    { label: 'logout', icon: 'pi pi-sign-out', command: () => {
+const items = computed<NavListItem[]>(() => [
+    { label: 'Home', icon: 'material-symbols:home-rounded', active: route.path === '/', command: () => router.push('/') },
+    { label: 'Card management', icon: 'material-symbols:badge-rounded', active: route.path === '/cards', command: () => router.push('/cards') },
+    { label: 'logout', icon: 'material-symbols:logout-rounded', command: () => {
         const userStore = useUserStore();
         userStore.unsetAccessToken();
         userStore.unsetUser();
@@ -23,15 +24,10 @@ const items = ref([
 </script>
 
 <template>
-    <div class="flex flex-col justify-center w-2xs h-dvh rounded-none! bg-surface-0 dark:bg-surface-900 text-surface-700 dark:text-surface-0 shadow-md"
-        data-pc-name="card" pc4="" data-pc-section="root">
-        <div class="p-5 flex flex-col gap-2 h-full" data-pc-section="body">
-            <div class="flex flex-col gap-2" data-pc-section="caption">
-                <div class="font-medium text-xl" data-pc-section="title">Medusa.net</div>
-            </div>
-            <div class="" data-pc-section="content">
-                <Menu :model="items" />
-            </div>
+    <div class="flex flex-col w-72 shrink-0 m-4 h-[calc(100dvh-2rem)] rounded-md-xl bg-md-surface-container overflow-y-auto">
+        <div class="flex flex-col gap-1 p-4 flex-1">
+            <div class="text-md-headline-small text-md-on-surface px-3 pt-2 pb-4">Medusa.net</div>
+            <NavList :items="items" />
         </div>
     </div>
 </template>

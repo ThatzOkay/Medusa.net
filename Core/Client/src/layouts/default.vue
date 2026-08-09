@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar.vue';
 <template>
     <div class="flex gap-4 h-full w-full">
         <Sidebar />
-        <main class="w-full h-dvh flex items-center">
+        <main class="w-full h-dvh flex items-center me-4">
             <router-view v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
                     <component :is="Component" />
