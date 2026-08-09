@@ -1,0 +1,6 @@
+mutation AddCard($cardNumber: String!) {
+    addCard(cardNumber: $cardNumber) {
+        konamiId
+        rawId
+    }
+}

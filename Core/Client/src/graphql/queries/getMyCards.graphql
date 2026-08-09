@@ -1,0 +1,10 @@
+query GetMyCards {
+    myCards {
+        edges {
+            node {
+                konamiId
+                rawId
+            }
+        }
+    }
+}
