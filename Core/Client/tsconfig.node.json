@@ -19,6 +19,6 @@
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["node", "vite-plugin-vue-layouts-next/client", "unplugin-vue-router/client"]
+    "types": ["node", "vite-plugin-vue-layouts-next/client"]
   }
 }

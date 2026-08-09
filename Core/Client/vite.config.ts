@@ -7,7 +7,7 @@ import child_process from 'child_process';
 import { env } from 'process';
 import tailwindcss from '@tailwindcss/vite'
 import Layouts from 'vite-plugin-vue-layouts-next'
-import VueRouter from 'unplugin-vue-router/vite'
+import VueRouter from 'vue-router/vite'
 
 const baseFolder =
     env.APPDATA !== undefined && env.APPDATA !== ''
@@ -48,6 +48,10 @@ export default defineConfig({
     server: {
         proxy: {
             '^/api': {
+                target,
+                secure: false
+            },
+            '^/graphql': {
                 target,
                 secure: false
             },
