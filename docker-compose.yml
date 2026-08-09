@@ -1,0 +1,8 @@
+services:
+  medusa:
+    build:
+      context: .
+      dockerfile: Core/Server/Dockerfile
+    image: thatzokay/medusa.net:latest
+    ports:
+      - "5120:5120"
