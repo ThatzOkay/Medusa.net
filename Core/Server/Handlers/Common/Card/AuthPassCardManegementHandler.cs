@@ -27,7 +27,7 @@ public class AuthPassCardManegementHandler(ICardService cardService) : Handler<A
             status = 116;
         }
 
-        if (card!.User.Pin != req.Password)
+        if (card?.User.Pin != req.Password)
         {
             status = 116;
         }

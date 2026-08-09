@@ -16,62 +16,28 @@ public class InquireCardManagementHandler(IPluginService pluginService, ICardSer
 
     public override async Task<InquireResponse> HandleAsync(InquireRequest req, string model)
     {
-        var splitModel = model.Split(':');
-        var gameCode = splitModel[0];
-        
-        var plugin = pluginService.FindPlugin(gameCode);
+        var lookup = await CardInquireLookup.ResolveAsync(req.CardId, model, pluginService, cardService);
 
-        var cardId = req.CardId;
-
-        var inquireResponse = new InquireResponse()
+        if (lookup.ErrorStatus is { } errorStatus)
         {
-            Status = 0
+            return new InquireResponse { Status = errorStatus };
+        }
+
+        var flag = lookup.ProfileExists ? "1" : "0";
+        var newFlag = lookup.ProfileExists ? "0" : "1";
+
+        return new InquireResponse
+        {
+            Status = 0,
+            Binded = 0,
+            DataId = lookup.KonamiId,
+            EcFlag = 1,
+            Expired = 0,
+            NewFlag = newFlag,
+            ExtidFlag = flag,
+            RefId = lookup.ExistingCard!.Id.ToString().PadLeft(16, '0'),
+            UserIdFlag = flag,
+            Pcode = lookup.KonamiId
         };
-
-        if (string.IsNullOrEmpty(cardId))
-        {
-            inquireResponse.Status = 111;
-            return inquireResponse;
-        }
-        
-        var konamiId = cardService.ConvertUidToKonamiId(cardId);
-        
-        if(string.IsNullOrEmpty(konamiId))
-        {
-            inquireResponse.Status = 111;
-            return inquireResponse;
-        }
-        
-        var exisitngCard = await cardService.FindByKonamiId(konamiId);
-
-        if (exisitngCard == null)
-        {
-            inquireResponse.Status = 112;
-            return inquireResponse;
-        }
-        
-        if (plugin is null)
-        {
-            inquireResponse.Status = 113;
-            return inquireResponse;
-        }
-
-        var profileExists = await pluginService.DoesProfileExistAsync(plugin, cardId);
-
-        var userIdFlag = profileExists ? "1" : "0";
-        var extIdFlag = profileExists ? "1" : "0";
-        var newFlag = profileExists ? "0" : "1";
-
-        inquireResponse.Binded = 0;
-        inquireResponse.DataId = konamiId;
-        inquireResponse.EcFlag = 1;
-        inquireResponse.Expired = 0;
-        inquireResponse.NewFlag = newFlag;
-        inquireResponse.ExtidFlag = extIdFlag;
-        inquireResponse.RefId = exisitngCard.Id.ToString().PadLeft(16, '0');
-        inquireResponse.UserIdFlag = userIdFlag;
-        inquireResponse.Pcode = konamiId;
-        
-        return inquireResponse;
     }
 }
