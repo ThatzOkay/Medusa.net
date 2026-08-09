@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Hosting.Server;
-using System.Xml.Linq;
 using Abstractions.Handlers;
 using Abstractions.Utils;
 using Server.Models.Response;
@@ -34,12 +33,6 @@ namespace Server.Handlers.Boot
                 Status = 0
             };
             
-            var servicesr = new XElement("services",
-                new XAttribute("expire", "3600"),
-                new XAttribute("method", "get"),
-                new XAttribute("mode", "operation"),
-                new XAttribute("status", "0"));
-
             var coreServices = new string[]{
         "cardmng", "facility", "message", "numbering", "package", "pcbevent", "pcbtracker", "pkglist",
         "posevent", "userdata", "userid", "eacoin", "dlstatus", "netlog", "info", "reference", "sidmgr",
@@ -69,42 +62,6 @@ namespace Server.Handlers.Boot
             });
             
             return services;
-        }
-
-        private static void AddKfcServices(XElement services)
-        {
-            var sdvxurl = $"{CommonUrl}";
-            string[] kfcServices = [
-        "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
-        "slobby", "sglobby"
-    ];
-
-            foreach(var service in kfcServices)
-                services.Add(new XElement("item", new XAttribute("name", service), new XAttribute("url", sdvxurl)));
-        }
-
-        private static void AddMdxServices(XElement services)
-        {
-            var mdxurl = $"{CommonUrl}";
-            string[] mdxServices = [
-        "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
-        "slobby", "sglobby"
-    ];
-
-            foreach(var service in mdxServices)
-                services.Add(new XElement("item", new XAttribute("name", service), new XAttribute("url", mdxurl)));
-        }
-
-        private static void AddM39Services(XElement services)
-        {
-            var m39url = $"{CommonUrl}";
-            string[] m39Services = [
-        "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
-        "slobby", "sglobby"
-    ];
-
-            foreach(var service in m39Services)
-                services.Add(new XElement("item", new XAttribute("name", service), new XAttribute("url", m39url)));
         }
 
     }
