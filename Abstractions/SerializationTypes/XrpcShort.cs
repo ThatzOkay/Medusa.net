@@ -1,52 +1,51 @@
-using System;
 using System.Xml.Serialization;
 
 namespace Abstractions.SerializationTypes;
 
-public struct XrpcULong : IEquatable<XrpcULong>
+public struct XrpcShort
 {
     [XmlAttribute("__type")]
     public string Type { get; set; }
 
     [XmlText]
-    public ulong Value { get; set; }
+    public short Value { get; set; }
 
-    public XrpcULong(ulong value)
+    public XrpcShort(short value)
     {
-        Type = "u64";
+        Type = "s16";
         Value = value;
     }
 
-    public static implicit operator ulong(XrpcULong value)
+    public static implicit operator short(XrpcShort value)
     {
         return value.Value;
     }
 
-    public static implicit operator XrpcULong(ulong value)
+    public static implicit operator XrpcShort(short value)
     {
-        return new XrpcULong(value);
+        return new XrpcShort(value);
     }
 
-    public bool Equals(XrpcULong other)
+    public bool Equals(XrpcShort other)
     {
         return Value == other.Value;
     }
 
     public override bool Equals(object obj)
     {
-        if (obj is XrpcULong other)
+        if (obj is XrpcShort other)
         {
             return Equals(other);
         }
         return false;
     }
 
-    public static bool operator ==(XrpcULong left, XrpcULong right)
+    public static bool operator ==(XrpcShort left, XrpcShort right)
     {
         return left.Equals(right);
     }
 
-    public static bool operator !=(XrpcULong left, XrpcULong right)
+    public static bool operator !=(XrpcShort left, XrpcShort right)
     {
         return !(left == right);
     }

@@ -108,6 +108,36 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
             newSlot.Plugin.GameCode, VerRange(newSlot.Plugin.MinVer, newSlot.Plugin.MaxVer));
     }
 
+    public Task UnloadAsync(string deletedPath)
+    {
+        // deletedPath can be the plugin's DLL itself (deleted in place) or the plugin's
+        // whole subdirectory removed wholesale (e.g. `rm -rf plugins/Foo`) - match either
+        // the exact assembly path or anything loaded from underneath the deleted directory.
+        var prefix = deletedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
+        var slots = pluginRegistry.GetSlots()
+            .Where(s => s.Context.AssemblyPath == deletedPath
+                        || s.Context.AssemblyPath.StartsWith(prefix, StringComparison.Ordinal))
+            .ToList();
+
+        if (slots.Count == 0)
+        {
+            logger.LogWarning("No loaded plugin matches deleted path '{path}'", deletedPath);
+            return Task.CompletedTask;
+        }
+
+        foreach (var slot in slots)
+        {
+            pluginRegistry.Remove(slot.Key);
+            slot.Unload();
+
+            logger.LogInformation("Plugin '{name}' (gameCode={gameCode}, {verRange}) unloaded because '{path}' was deleted",
+                slot.Plugin.Name, slot.Plugin.GameCode, VerRange(slot.Plugin.MinVer, slot.Plugin.MaxVer), deletedPath);
+        }
+
+        return Task.CompletedTask;
+    }
+
     // ── Queries ──────────────────────────────────────────────────────────────
 
     public IEnumerable<IMedusaPlugin> GetPlugins() =>

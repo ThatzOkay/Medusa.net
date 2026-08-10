@@ -14,6 +14,9 @@ public interface IPluginService
     /// <summary>Hot-swap a single plugin DLL without restarting.</summary>
     Task ReloadAsync(string pluginDllPath);
 
+    /// <summary>Unload any plugin loaded from the given DLL or from underneath the given directory, once it's been deleted from disk.</summary>
+    Task UnloadAsync(string deletedPath);
+
     void SetServiceProvider(IServiceProvider serviceProvider);
 
     IEnumerable<IMedusaPlugin> GetPlugins();

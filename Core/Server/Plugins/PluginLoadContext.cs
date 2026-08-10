@@ -9,6 +9,8 @@ public sealed class PluginLoadContext(string pluginAssemblyPath)
 {
     private readonly AssemblyDependencyResolver _resolver = new(pluginAssemblyPath);
 
+    public string AssemblyPath => pluginAssemblyPath;
+
     protected override Assembly? Load(AssemblyName assemblyName)
     {
         var path = _resolver.ResolveAssemblyToPath(assemblyName);
