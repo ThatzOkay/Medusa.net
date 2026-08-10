@@ -30,18 +30,45 @@ public record FacilityLocation
 {
     [XmlElement("id")]
     public required XrpcString Id { get; set; }
-    
+
     [XmlElement("country")]
     public required XrpcString Country { get; set; }
-    
+
     [XmlElement("region")]
     public required XrpcString Region { get; set; }
-    
+
     [XmlElement("name")]
     public required XrpcString Name { get; set; }
-    
+
     [XmlElement("type")]
     public required XrpcULong Type { get; set; }
+
+    [XmlElement("companycode")]
+    public required XrpcString CompanyCode { get; set; }
+
+    [XmlElement("customercode")]
+    public required XrpcString CustomerCode { get; set; }
+
+    [XmlElement("countryname")]
+    public required XrpcString CountryName { get; set; }
+
+    [XmlElement("countryjname")]
+    public required XrpcString CountryJpName { get; set; }
+
+    [XmlElement("regionname")]
+    public required XrpcString RegionName { get; set; }
+
+    [XmlElement("regionjname")]
+    public required XrpcString RegionJpName { get; set; }
+
+    [XmlElement("accuracy")]
+    public required XrpcULong Accuracy { get; set; }
+
+    [XmlElement("latitude")]
+    public required XrpcInt Latitude { get; set; }
+
+    [XmlElement("longitude")]
+    public required XrpcInt Longitude { get; set; }
 }
 
 public record FacilityLine
@@ -69,15 +96,9 @@ public record FacilityPublic
 {
     [XmlElement("flag")]
     public required XrpcULong Flag { get; set; }
-    
+
     [XmlElement("name")]
     public required XrpcString Name { get; set; }
-    
-    [XmlElement("latitude")]
-    public required XrpcString Latitude { get; set; }
-    
-    [XmlElement("longitude")]
-    public required XrpcString Longitude { get; set; }
 }
 
 public record FacilityShare

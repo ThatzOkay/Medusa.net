@@ -21,9 +21,18 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
             {
                 Id = new XrpcString("00000000"),
                 Country = new XrpcString("JP"),
-                Region = new XrpcString("NA"),
+                Region = new XrpcString("13"),
                 Name = new XrpcString("Medusa"),
-                Type = new XrpcULong(0)
+                Type = new XrpcULong(0),
+                CompanyCode = new XrpcString("00"),
+                CustomerCode = new XrpcString("0000"),
+                CountryName = new XrpcString("Japan"),
+                CountryJpName = new XrpcString("日本"),
+                RegionName = new XrpcString("Tokyo"),
+                RegionJpName = new XrpcString("東京都"),
+                Accuracy = new XrpcULong(0),
+                Latitude = new XrpcInt(0),
+                Longitude = new XrpcInt(0)
             },
             Line = new FacilityLine()
             {
@@ -39,9 +48,7 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
             Public = new FacilityPublic()
             {
                 Flag = new XrpcULong(1),
-                Name = new XrpcString("Medusa"),
-                Latitude = new XrpcString("0"),
-                Longitude = new XrpcString("0")
+                Name = new XrpcString("Medusa")
             },
             Share = new FacilityShare()
             {
