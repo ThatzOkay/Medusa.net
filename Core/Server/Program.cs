@@ -90,6 +90,7 @@ builder.Services.AddOpenApi("v1");
 var pluginRegistry = new PluginRegistry();
 var pluginService = new PluginService(logger, pluginRegistry);
 builder.Services.AddSingleton(pluginRegistry);
+builder.Services.AddSingleton<IEaCoinSessionService, EaCoinSessionService>();
 builder.Services.AddSingleton<IPluginService>(pluginService);
 builder.Services.AddHostedService<PluginWatcher>();
 

@@ -425,4 +425,7 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/dotnetcore,visualstudiocode,visualstudio
-/Core/Server/Medusa.db
+*.db
+.idea/
+
+Core/Server/database/

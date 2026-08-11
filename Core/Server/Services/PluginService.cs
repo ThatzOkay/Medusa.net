@@ -163,30 +163,33 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         var method = plugin.DoesProfileExist;
         var parameters = method.Method.GetParameters();
 
+        Task<bool> InvokeAsync(IServiceProvider composite)
+        {
+            var args = parameters.Select(p =>
+            {
+                if (p.Name == "cardId") return (object)cardId;
+                var isFromServices = p.GetCustomAttribute<FromServicesAttribute>() != null;
+                return isFromServices
+                    ? composite.GetRequiredService(p.ParameterType)
+                    : throw new InvalidOperationException(
+                        $"Don't know how to resolve parameter '{p.Name}' on plugin delegate DoesProfileExist");
+            }).ToArray();
+
+            return (Task<bool>)method.DynamicInvoke(args)!;
+        }
+
         await using var hostScope = _serviceProvider.CreateAsyncScope();
 
-        IServiceProvider composite;
         if (slot is not null)
         {
+            // pluginScope must stay alive until the delegate has actually run, since
+            // composite (and anything resolved from it) is only valid while it's open.
             await using var pluginScope = slot.PluginServices.CreateAsyncScope();
-            composite = new PluginServiceProvider(pluginScope.ServiceProvider, hostScope.ServiceProvider);
-        }
-        else
-        {
-            composite = hostScope.ServiceProvider;
+            var composite = new PluginServiceProvider(pluginScope.ServiceProvider, hostScope.ServiceProvider);
+            return await InvokeAsync(composite);
         }
 
-        var args = parameters.Select(p =>
-        {
-            if (p.Name == "cardId") return (object)cardId;
-            var isFromServices = p.GetCustomAttribute<FromServicesAttribute>() != null;
-            return isFromServices
-                ? composite.GetRequiredService(p.ParameterType)
-                : throw new InvalidOperationException(
-                    $"Don't know how to resolve parameter '{p.Name}' on plugin delegate DoesProfileExist");
-        }).ToArray();
-
-        return await (Task<bool>)method.DynamicInvoke(args)!;
+        return await InvokeAsync(hostScope.ServiceProvider);
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────
