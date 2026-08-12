@@ -38,11 +38,28 @@ public sealed class PluginWatcher(IPluginService pluginService, ILogger<PluginWa
         // Only .dll writes matter for hot-reload; ignore other files and directory touches.
         if (!e.FullPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) return;
 
-        Debounce(e.FullPath, () =>
+        // Debounce (and reload) by the plugin's own root directory rather than the exact file
+        // that changed - a package-referenced plugin ships dozens of dependency dlls (and
+        // culture subfolders of satellite resource dlls), so a single redeploy touches many
+        // paths at once. Keying per-file would fire one reload per dll instead of one overall.
+        var pluginDir = GetPluginRootDir(e.FullPath);
+        if (pluginDir is null) return;
+
+        Debounce(pluginDir, () =>
         {
-            logger.LogInformation("Plugin file changed: {path}", e.FullPath);
-            _ = pluginService.ReloadAsync(e.FullPath);
+            logger.LogInformation("Plugin directory changed: {dir}", pluginDir);
+            _ = pluginService.ReloadAsync(pluginDir);
         });
+    }
+
+    // Resolves any path under plugins/<PluginName>/... (including nested culture subfolders
+    // like plugins/<PluginName>/cs/X.resources.dll) back to plugins/<PluginName>. Null if the
+    // path isn't inside a plugin folder at all (e.g. a stray file dropped directly in plugins/).
+    private string? GetPluginRootDir(string fullPath)
+    {
+        var relative = Path.GetRelativePath(_pluginPath, fullPath);
+        var separatorIndex = relative.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]);
+        return separatorIndex < 0 ? null : Path.Combine(_pluginPath, relative[..separatorIndex]);
     }
 
     private void OnDeleted(object sender, FileSystemEventArgs e)

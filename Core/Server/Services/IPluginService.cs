@@ -11,8 +11,8 @@ public interface IPluginService
     /// <summary>Post-build: add slots to the registry, call OnAppInitialize on each.</summary>
     Task ActivatePluginsAsync(WebApplication app);
 
-    /// <summary>Hot-swap a single plugin DLL without restarting.</summary>
-    Task ReloadAsync(string pluginDllPath);
+    /// <summary>Hot-swap the plugin loaded from the given plugin directory without restarting.</summary>
+    Task ReloadAsync(string pluginDir);
 
     /// <summary>Unload any plugin loaded from the given DLL or from underneath the given directory, once it's been deleted from disk.</summary>
     Task UnloadAsync(string deletedPath);

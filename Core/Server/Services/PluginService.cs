@@ -39,17 +39,10 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         }
 
         var loaded = 0;
-        for (var i = 0; i < dirs.Length; i++)
+        foreach (var dir in dirs)
         {
-            var dll = FindPluginDll(dirs[i]);
-            if (dll is null)
-            {
-                logger.LogWarning("Skipping directory '{dir}': no DLL found", Path.GetFileName(dirs[i]));
-                continue;
-            }
-
-            var slot = TryLoadSlot(dll);
-            if (slot is null) continue; // TryLoadSlot already logged the reason
+            var slot = TryLoadSlotFromDirectory(dir);
+            if (slot is null) continue;
 
             logger.LogInformation("Registering plugin {} (gameCode={gameCode}, {verRange})",
                 slot.Plugin.Name, slot.Plugin.GameCode, VerRange(slot.Plugin.MinVer, slot.Plugin.MaxVer));
@@ -83,13 +76,15 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
 
     // ── Hot-reload ───────────────────────────────────────────────────────────
 
-    public async Task ReloadAsync(string pluginDllPath)
+    public async Task ReloadAsync(string pluginDir)
     {
-        var name = Path.GetFileNameWithoutExtension(pluginDllPath);
-        logger.LogInformation("Hot-reloading plugin from '{dll}'", name);
+        logger.LogInformation("Hot-reloading plugin in '{dir}'", Path.GetFileName(pluginDir));
 
-        var newSlot = TryLoadSlot(pluginDllPath);
-        if (newSlot is null) return; // TryLoadSlot already logged the reason
+        // Re-scan the whole directory rather than assuming any particular dll is the plugin -
+        // package-referenced plugins ship every dependency dll (AssetsTools.NET, EFCore, ...)
+        // alongside their own, so which file actually declares IMedusaPlugin isn't known up front.
+        var newSlot = TryLoadSlotFromDirectory(pluginDir);
+        if (newSlot is null) return; // TryLoadSlotFromDirectory already logged the reason
 
         var old = pluginRegistry.Remove(newSlot.Key);
 
@@ -194,6 +189,40 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
 
     // ── Internal ─────────────────────────────────────────────────────────────
 
+    // A plugin folder now ships every package dependency alongside the plugin's own dll
+    // (AssetsTools.NET.dll, EFCore, etc.), so which file actually declares IMedusaPlugin
+    // isn't known up front - try each dll in the directory until one of them does.
+    private PluginSlot? TryLoadSlotFromDirectory(string dir)
+    {
+        var dlls = Directory.EnumerateFiles(dir, "*.dll").ToArray();
+        if (dlls.Length == 0)
+        {
+            logger.LogWarning("Skipping directory '{dir}': no DLL found", Path.GetFileName(dir));
+            return null;
+        }
+
+        foreach (var dllFile in dlls)
+        {
+            if (dllFile.Contains("Abstractions.dll"))
+                continue;
+            
+            var slot = TryLoadSlot(dllFile);
+            if (slot is not null) return slot;
+        }
+
+        logger.LogWarning("No medusa plugin found among {count} dll(s) in '{dir}'", dlls.Length, Path.GetFileName(dir));
+        return null;
+    }
+
+    // A non-atomic deploy (plain multi-file cp, editor autosave, etc.) can leave a dll
+    // partially written when FileSystemWatcher's debounce fires. That surfaces as
+    // BadImageFormatException ("Invalid token", "Invalid assembly public key", ...) from
+    // reading a truncated PE - a transient condition, not a real failure, so retry through
+    // it briefly before giving up. Any other exception (genuinely bad/incompatible dll)
+    // fails immediately as before.
+    private const int LoadRetryAttempts = 5;
+    private static readonly TimeSpan LoadRetryDelay = TimeSpan.FromMilliseconds(150);
+
     private PluginSlot? TryLoadSlot(string dllPath)
     {
         var context = new PluginLoadContext(dllPath);
@@ -201,7 +230,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         Assembly assembly;
         try
         {
-            assembly = context.LoadFromAssemblyPath(dllPath);
+            assembly = LoadWithRetry(context, dllPath);
         }
         catch (Exception ex)
         {
@@ -214,8 +243,18 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         IReadOnlyList<Type> handlerTypes;
         try
         {
-            pluginType = assembly.GetTypes()
+            var pluginTypes = assembly.GetTypes();
+       ;     pluginType = pluginTypes
                 .FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IMedusaPlugin)));
+
+            if (pluginType is null)
+            {
+                // Not the plugin dll itself - just one of its dependencies (AssetsTools.NET,
+                // EFCore, ...) picked up while scanning the whole directory. Not an error on
+                // its own, so no log here; TryLoadSlotFromDirectory logs if *none* of them match.
+                context.Unload();
+                return null;
+            }
 
             handlerTypes = assembly.GetTypes()
                 .Where(t => typeof(BaseHandler).IsAssignableFrom(t)
@@ -228,13 +267,6 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
             logger.LogWarning("Plugin '{}' appears to be outdated or incompatible. Please update it to the latest version of Medusa. Details: {}",
                 assembly.GetName().Name,
                 string.Join("; ", ex.LoaderExceptions.Select(e => e?.Message ?? "Unknown error")));
-            return null;
-        }
-
-        if (pluginType is null)
-        {
-            context.Unload();
-            logger.LogError("Could not find medusa plugin in dll {}", assembly.GetName().Name);
             return null;
         }
 
@@ -254,6 +286,23 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         return new PluginSlot(context, instance, handlerTypes, pluginSp);
     }
 
+    private Assembly LoadWithRetry(PluginLoadContext context, string dllPath)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return context.LoadFromAssemblyPath(dllPath);
+            }
+            catch (BadImageFormatException) when (attempt < LoadRetryAttempts)
+            {
+                logger.LogDebug("'{}' looks like a partial write (attempt {}/{}), retrying...",
+                    Path.GetFileName(dllPath), attempt, LoadRetryAttempts);
+                Thread.Sleep(LoadRetryDelay);
+            }
+        }
+    }
+
     // Datecodes are YYYYMMDDXX, e.g. 2025070800 → "2025-07-08 r00"
     private static string FormatVer(int ver)
     {
@@ -269,9 +318,4 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
             (null, not null) => $"up to {FormatVer(maxVer.Value)}",
             _ => $"{FormatVer(minVer.Value)} – {FormatVer(maxVer.Value)}"
         };
-
-    private static string? FindPluginDll(string dir) =>
-        Directory.EnumerateFiles(dir, "*.dll")
-            .FirstOrDefault(f => !Path.GetFileNameWithoutExtension(f)
-                .Equals("Abstractions", StringComparison.OrdinalIgnoreCase));
 }
