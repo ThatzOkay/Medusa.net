@@ -56,13 +56,6 @@ const toggle = (item: NavListItem) => expandedOverrides.set(item.label, !isExpan
             :class="{ 'rotate-180': isExpanded(item) }"
           />
         </button>
-        <!--
-          Material 3 dropdown motion (https://m3.material.io/styles/motion): the
-          container expands/collapses along its height on the "standard" easing
-          curve while its content fades in a beat after the container starts
-          growing (and fades out immediately on collapse). The grid-rows-[0fr/1fr]
-          trick animates to an intrinsic height without measuring it in JS.
-        -->
         <div
           class="grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.2,0,0,1)]"
           :class="isExpanded(item) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
