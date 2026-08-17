@@ -2,14 +2,14 @@ using System.Diagnostics;
 using System.Reflection;
 using Abstractions;
 using Abstractions.Handlers;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
+using Server.Api;
 using Server.Plugins;
 using Path = System.IO.Path;
 
 namespace Server.Services;
 
-public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPluginService
+public class PluginService(ILogger logger, PluginRegistry pluginRegistry, PluginUiEventBroadcaster uiEventBroadcaster) : IPluginService
 {
     private readonly string _pluginPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
     private readonly List<PluginSlot> _pendingSlots = [];
@@ -101,6 +101,10 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         logger.LogInformation("Plugin '{name}' v{version} hot-reloaded successfully (gameCode={gameCode}, {verRange})",
             newSlot.Plugin.Name, newSlot.Plugin.Version,
             newSlot.Plugin.GameCode, VerRange(newSlot.Plugin.MinVer, newSlot.Plugin.MaxVer));
+        
+        if (newSlot.Plugin.UiManifest is not null)
+            uiEventBroadcaster.Broadcast(
+                new PluginUiEvent("reloaded", PluginsApi.DerivePluginUiId(newSlot.Plugin)));
     }
 
     public Task UnloadAsync(string deletedPath)
@@ -108,7 +112,8 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         // deletedPath can be the plugin's DLL itself (deleted in place) or the plugin's
         // whole subdirectory removed wholesale (e.g. `rm -rf plugins/Foo`) - match either
         // the exact assembly path or anything loaded from underneath the deleted directory.
-        var prefix = deletedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var prefix = deletedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                     Path.DirectorySeparatorChar;
 
         var slots = pluginRegistry.GetSlots()
             .Where(s => s.Context.AssemblyPath == deletedPath
@@ -126,8 +131,13 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
             pluginRegistry.Remove(slot.Key);
             slot.Unload();
 
-            logger.LogInformation("Plugin '{name}' (gameCode={gameCode}, {verRange}) unloaded because '{path}' was deleted",
+            logger.LogInformation(
+                "Plugin '{name}' (gameCode={gameCode}, {verRange}) unloaded because '{path}' was deleted",
                 slot.Plugin.Name, slot.Plugin.GameCode, VerRange(slot.Plugin.MinVer, slot.Plugin.MaxVer), deletedPath);
+            
+            if (slot.Plugin.UiManifest is not null)
+                uiEventBroadcaster.Broadcast(
+                    new PluginUiEvent("unloaded", PluginsApi.DerivePluginUiId(slot.Plugin)));
         }
 
         return Task.CompletedTask;
@@ -139,11 +149,11 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         pluginRegistry.GetPlugins();
 
     public IMedusaPlugin? FindPlugin(string gameCode, int? minVer = null, int? maxVer = null) =>
-        pluginRegistry.GetPlugins()
+        pluginRegistry
+            .GetPlugins()
             .Where(p => p.GameCode == gameCode)
             .Where(p => minVer is null || p.MinVer <= minVer)
-            .Where(p => maxVer is null || p.MaxVer >= maxVer)
-            .FirstOrDefault();
+            .FirstOrDefault(p => maxVer is null || p.MaxVer >= maxVer);
 
     public async Task<bool> DoesProfileExistAsync(IMedusaPlugin plugin, string cardId)
     {
@@ -158,33 +168,30 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         var method = plugin.DoesProfileExist;
         var parameters = method.Method.GetParameters();
 
-        Task<bool> InvokeAsync(IServiceProvider composite)
+        await using var hostScope = _serviceProvider.CreateAsyncScope();
+
+        if (slot is null) return await InvokeAsync(hostScope.ServiceProvider);
+
+        // pluginScope must stay alive until the delegate has actually run, since
+        // composite (and anything resolved from it) is only valid while it's open.
+        await using var pluginScope = slot.PluginServices.CreateAsyncScope();
+        var composite = new PluginServiceProvider(pluginScope.ServiceProvider, hostScope.ServiceProvider);
+        return await InvokeAsync(composite);
+
+        Task<bool> InvokeAsync(IServiceProvider serviceProvider)
         {
             var args = parameters.Select(p =>
             {
-                if (p.Name == "cardId") return (object)cardId;
+                if (p.Name == "cardId") return cardId;
                 var isFromServices = p.GetCustomAttribute<FromServicesAttribute>() != null;
                 return isFromServices
-                    ? composite.GetRequiredService(p.ParameterType)
+                    ? serviceProvider.GetRequiredService(p.ParameterType)
                     : throw new InvalidOperationException(
                         $"Don't know how to resolve parameter '{p.Name}' on plugin delegate DoesProfileExist");
             }).ToArray();
 
             return (Task<bool>)method.DynamicInvoke(args)!;
         }
-
-        await using var hostScope = _serviceProvider.CreateAsyncScope();
-
-        if (slot is not null)
-        {
-            // pluginScope must stay alive until the delegate has actually run, since
-            // composite (and anything resolved from it) is only valid while it's open.
-            await using var pluginScope = slot.PluginServices.CreateAsyncScope();
-            var composite = new PluginServiceProvider(pluginScope.ServiceProvider, hostScope.ServiceProvider);
-            return await InvokeAsync(composite);
-        }
-
-        return await InvokeAsync(hostScope.ServiceProvider);
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────
@@ -205,7 +212,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         {
             if (dllFile.Contains("Abstractions.dll"))
                 continue;
-            
+
             var slot = TryLoadSlot(dllFile);
             if (slot is not null) return slot;
         }
@@ -235,7 +242,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         catch (Exception ex)
         {
             context.Unload();
-            logger.LogError("Failed to load assembly '{}': {}", Path.GetFileName(dllPath), ex.Message);
+            logger.LogError("Failed to load assembly '{path}': {message}", Path.GetFileName(dllPath), ex.Message);
             return null;
         }
 
@@ -244,7 +251,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         try
         {
             var pluginTypes = assembly.GetTypes();
-       ;     pluginType = pluginTypes
+            pluginType = pluginTypes
                 .FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IMedusaPlugin)));
 
             if (pluginType is null)
@@ -264,7 +271,8 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
         catch (ReflectionTypeLoadException ex)
         {
             context.Unload();
-            logger.LogWarning("Plugin '{}' appears to be outdated or incompatible. Please update it to the latest version of Medusa. Details: {}",
+            logger.LogWarning(
+                "Plugin '{name}' appears to be outdated or incompatible. Please update it to the latest version of Medusa. Details: {}",
                 assembly.GetName().Name,
                 string.Join("; ", ex.LoaderExceptions.Select(e => e?.Message ?? "Unknown error")));
             return null;
@@ -288,7 +296,9 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
 
     private Assembly LoadWithRetry(PluginLoadContext context, string dllPath)
     {
-        for (var attempt = 1; ; attempt++)
+        var attempt = 1;
+
+        do
         {
             try
             {
@@ -296,11 +306,19 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry) : IPlu
             }
             catch (BadImageFormatException) when (attempt < LoadRetryAttempts)
             {
-                logger.LogDebug("'{}' looks like a partial write (attempt {}/{}), retrying...",
-                    Path.GetFileName(dllPath), attempt, LoadRetryAttempts);
+                logger.LogDebug(
+                    "'{path}' looks like a partial write (attempt {attempt}/{retryAttempts}), retrying...",
+                    Path.GetFileName(dllPath),
+                    attempt,
+                    LoadRetryAttempts);
+
                 Thread.Sleep(LoadRetryDelay);
             }
-        }
+
+            attempt++;
+        } while (attempt <= LoadRetryAttempts);
+
+        throw new InvalidOperationException("Failed to load assembly.");
     }
 
     // Datecodes are YYYYMMDDXX, e.g. 2025070800 → "2025-07-08 r00"

@@ -16,16 +16,16 @@ public static class CardsApi
         return group;
     }
 
-    internal static async Task<IResult> ValidateCard(ValidateCardRequest request, [FromServices] ICardService cardService)
+    private static async Task<IResult> ValidateCard(ValidateCardRequest request, [FromServices] ICardService cardService)
     {
         var isRegistered = await cardService.IsRegistered(request.CardId, request.Pin);
         if (isRegistered)
         {
             return Results.Ok(new ValidateCardResponse
-            {
-                Message = "Card already registered.",
-                Success = false
-            });
+            (
+                "Card already registered.",
+                false
+            ));
         }
 
         var exists = await cardService.Exists(request.CardId);
@@ -33,10 +33,10 @@ public static class CardsApi
         if (!exists)
         {
             return Results.Ok(new ValidateCardResponse
-            {
-                Message = "Card does not exist.",
-                Success = false
-            });
+            (
+                "Card does not exist.",
+                false
+            ));
         }
 
         var validPin = await cardService.ValidatePinAsync(request.CardId, request.Pin);
@@ -44,17 +44,17 @@ public static class CardsApi
         if (validPin)
         {
             return Results.Ok(new ValidateCardResponse
-            {
-                Message = "Card is valid.",
-                Success = true
-            });
+            (
+                "Card is valid.",
+                true
+            ));
         }
 
         return Results.Ok(new ValidateCardResponse
-        {
-            Message = "Card does not exist.",
-            Success = false
-        });
+        (
+            "Card does not exist.",
+            false
+        ));
     }
 
     internal static async Task<IResult> GetUserCards(HttpContext httpContext, [FromServices] ICardService cardService)

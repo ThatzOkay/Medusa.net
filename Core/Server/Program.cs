@@ -4,7 +4,6 @@ using Abstractions.Utils;
 using KbinXml.Net;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server;
@@ -15,13 +14,8 @@ using Server.Middlewares;
 using Server.Models.Request;
 using Server.Services;
 using Server.Utils;
-using System.Net;
-using System.Net.Http;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
-using System.Xml;
 using System.Xml.Linq;
 using Scalar.AspNetCore;
 using Server.GraphQL;
@@ -88,7 +82,10 @@ builder.Services.AddOpenApi("v1");
 // Create plugin infrastructure manually so DiscoverPluginsAsync can call
 // OnBuilderInitialize before the DI container is sealed by builder.Build().
 var pluginRegistry = new PluginRegistry();
-var pluginService = new PluginService(logger, pluginRegistry);
+
+var pluginUiBroadcaster = new PluginUiEventBroadcaster();
+builder.Services.AddSingleton(pluginUiBroadcaster);
+var pluginService = new PluginService(logger, pluginRegistry, pluginUiBroadcaster);
 builder.Services.AddSingleton(pluginRegistry);
 builder.Services.AddSingleton<IEaCoinSessionService, EaCoinSessionService>();
 builder.Services.AddSingleton<IPluginService>(pluginService);
@@ -143,6 +140,8 @@ var apiGroup = app.MapGroup("/api").WithTags("API");
 apiGroup.MapCardsApiEndpoints();
 apiGroup.MapUserApiEndpoints();
 apiGroup.MapIdentityApi();
+app.MapPluginStaticFiles();
+apiGroup.MapPluginApiEndpoints();
 
 var eamuseGroup = app.MapGroup("eamuse");
 

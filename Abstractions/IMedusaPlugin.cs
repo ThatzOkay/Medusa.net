@@ -15,7 +15,19 @@ public interface IMedusaPlugin
     int? MinVer { get; }
     int? MaxVer { get; }
     Encoding? ForcedEncoding { get; }
+    PluginUiManifest? UiManifest { get; }
 
+    /// <summary>
+    /// Called once before <c>builder.Build()</c>.
+    /// Register DbContexts, HotChocolate type extensions, and other services that must exist
+    /// before the DI container is sealed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Hot-reload caveat:</b> this method is NOT called again on hot-reload — the DI container
+    /// and HotChocolate schema are already built by then. Any GraphQL type extensions you add here
+    /// only take effect when the host application restarts. REST endpoints belong in
+    /// <see cref="OnAppInitialize"/> instead, which IS called on every reload.
+    /// </remarks>
     Task OnBuilderInitialize(WebApplicationBuilder builder);
 
     /// <summary>
@@ -29,3 +41,16 @@ public interface IMedusaPlugin
 
     Delegate DoesProfileExist { get; }
 }
+
+public record PluginNavItem(string Label, string Icon, string Path);
+
+/// <param name="Path">Absolute path, e.g. "/plugins/foo" or "/plugins/foo/scores".</param>
+/// <param name="ComponentKey">Key into the IIFE bundle's export object, e.g. "FooHome".</param>
+public record PluginRoute(string Path, string ComponentKey);
+
+public record PluginUiManifest(
+    string DisplayName,
+    PluginNavItem[] NavItems,
+    PluginRoute[] Routes,
+    string Icon = "material-symbols:extension-rounded",
+    bool ShowWhenNoProfile = false);

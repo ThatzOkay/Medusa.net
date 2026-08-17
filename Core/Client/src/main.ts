@@ -8,6 +8,8 @@ import { DefaultApolloClient } from '@vue/apollo-composable';
 import { graphqlClient } from '@/data/graphqlClient';
 import router from './router';
 
+import './types/globals';
+
 const app = createApp(App);
 
 const pinia = createPinia();
