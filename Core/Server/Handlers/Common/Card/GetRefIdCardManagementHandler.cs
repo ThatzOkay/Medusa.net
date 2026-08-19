@@ -29,7 +29,7 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
         {
             Status = 0,
             DataId = card.RawId,
-            ReferenceId = user.Id.ToString()
+            ReferenceId = card.Id.ToString().PadLeft(16, '0')
         };
         
         return getRefId;

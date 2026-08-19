@@ -3,12 +3,12 @@ namespace Server.Services;
 public class EaCoinSessionService : IEaCoinSessionService
 {
     private readonly List<EaCoinSession> sessions = [];
-    public void AddSession(int userId, string sessionId, string refId)
+    public void AddSession(long userId, string sessionId, string refId)
     {
         sessions.Add(new EaCoinSession(sessionId, userId, refId));
     }
 
-    public EaCoinSession AddSession(int userId, string cardid)
+    public EaCoinSession AddSession(long userId, string cardid)
     {
         var sessionId = GenerateSessionId();
         var session = new EaCoinSession(sessionId, userId, cardid);
@@ -32,7 +32,7 @@ public class EaCoinSessionService : IEaCoinSessionService
     }
 }
 
-public record EaCoinSession(string SessionId, int UserId, string RefId)
+public record EaCoinSession(string SessionId, long UserId, string RefId)
 {
     public bool IsCharging { get; set; } = false;
 }

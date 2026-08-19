@@ -69,7 +69,7 @@ public static class CardsApi
         {
             return Results.Unauthorized();
         }
-        var cards = await cardService.GetCardsByUserIdAsync(int.Parse(userId));
+        var cards = await cardService.GetCardsByUserIdAsync(long.Parse(userId));
         
         return Results.Ok(cards.SelectFacets<CardDto>());
     }

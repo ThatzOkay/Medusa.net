@@ -10,7 +10,7 @@ public class CardQuery
     [UsePaging(IncludeTotalCount = true), UseFiltering, UseSorting, Authorize]
     public IQueryable<Card> GetMyCards([Service] AppDbContext appDbContext, ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken)
     {
-        var parsed = int.TryParse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", out var userId);
+        var parsed = long.TryParse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", out var userId);
 
         if (!parsed && userId is 0)
         {

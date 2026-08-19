@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Abstractions.Entities
 {
-    public class User: IdentityUser<int>
+    public class User: IdentityUser<long>
     {
         public int PaseliAmount { get; set; } = 0;
         public string Pin { get; set; } = "0000";

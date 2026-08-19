@@ -204,7 +204,7 @@ public class CardService : ICardService
         return _context.Cards.Include(x => x.User).FirstOrDefaultAsync(c => c.RawId == cardId);
     }
 
-    public Task<Card?> FindById(int id)
+    public Task<Card?> FindById(long id)
     {
         return _context.Cards.Include(c => c.User).FirstOrDefaultAsync(x => x.Id == id);
     }
@@ -224,7 +224,7 @@ public class CardService : ICardService
         return _context.Cards.AnyAsync(c => c.KonamiId == konamiId && c.User.Pin == pin && c.User.PasswordHash != null);
     }
 
-    public Task<List<Card>> GetCardsByUserIdAsync(int userId)
+    public Task<List<Card>> GetCardsByUserIdAsync(long userId)
     {
         return _context.Cards.Where(c => c.UserId == userId).ToListAsync();
     }

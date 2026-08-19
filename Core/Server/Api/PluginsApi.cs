@@ -83,7 +83,7 @@ public static class PluginsApi
             ?.Value;
 
         List<string> userCardIds = [];
-        if (userId is not null && int.TryParse(userId, out var uid))
+        if (userId is not null && long.TryParse(userId, out var uid))
         {
             var cards = await cardService.GetCardsByUserIdAsync(uid);
             userCardIds = [.. cards.Select(c => c.RawId)];

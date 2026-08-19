@@ -7,7 +7,7 @@ using Abstractions.Entities;
 namespace Server
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<User, IdentityRole<int>, int>(options)
+    : IdentityDbContext<User, IdentityRole<long>, long>(options)
     {
         public override DbSet<User> Users { get; set; }
         public DbSet<Card> Cards { get; set; }

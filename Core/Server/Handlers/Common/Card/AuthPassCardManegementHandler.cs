@@ -20,7 +20,7 @@ public class AuthPassCardManegementHandler(ICardService cardService) : Handler<A
         var status = 0;
 
         var id = req.ReferenceId.TrimStart();
-        var card = await cardService.FindById(int.Parse(id)!);
+        var card = await cardService.FindById(long.Parse(id)!);
 
         if (card is null)
         {

@@ -18,19 +18,65 @@ public sealed class PluginWatcher(IPluginService pluginService, ILogger<PluginWa
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        _watcher = CreateWatcher();
+        _watcher.EnableRaisingEvents = true;
+        return Task.CompletedTask;
+    }
+
+    private FileSystemWatcher CreateWatcher()
+    {
         // Watch everything under plugins/, not just *.dll - a whole plugin subfolder
         // getting deleted (e.g. `rm -rf plugins/Foo`) is a directory-name change, and
         // filtering to *.dll would never see that entry at all.
-        _watcher = new FileSystemWatcher(_pluginPath)
+        var watcher = new FileSystemWatcher(_pluginPath)
         {
             IncludeSubdirectories = true,
             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName
         };
-        _watcher.Changed += OnChanged;
-        _watcher.Created += OnChanged;
-        _watcher.Deleted += OnDeleted;
+        watcher.Changed += OnChanged;
+        watcher.Created += OnCreated;
+        watcher.Deleted += OnDeleted;
+        watcher.Error += OnError;
+        return watcher;
+    }
+
+    // A dropped/overflowed watcher (e.g. its internal event buffer overflowing because a new
+    // plugin folder dumped dozens of dependency dlls in at once) doesn't just miss that burst -
+    // FileSystemWatcher stops reliably raising events at all afterwards unless recreated. Log
+    // it and swap in a fresh watcher rather than silently going deaf to every future change.
+    private void OnError(object sender, ErrorEventArgs e)
+    {
+        logger.LogError(e.GetException(), "Plugin file watcher failed; recreating it");
+
+        _watcher?.Dispose();
+        _watcher = CreateWatcher();
         _watcher.EnableRaisingEvents = true;
-        return Task.CompletedTask;
+    }
+
+    // A brand-new plugin folder (as opposed to a redeploy into an already-watched one) races
+    // FileSystemWatcher's own subdirectory bookkeeping: the watch on a newly created
+    // subdirectory is only registered once this Created event for the directory itself has
+    // been processed. If the folder is populated in one fast burst (`cp -r`, an unzip, an
+    // installer script that mkdirs then writes) the dlls inside can land during that gap, so
+    // their own Created events are simply never seen. Scan a newly created top-level plugin
+    // folder synchronously right here to catch that case.
+    private void OnCreated(object sender, FileSystemEventArgs e)
+    {
+        if (Directory.Exists(e.FullPath) && GetPluginRootDir(e.FullPath) is null)
+        {
+            if (Directory.EnumerateFiles(e.FullPath, "*.dll", SearchOption.AllDirectories).Any())
+            {
+                Debounce(e.FullPath, () =>
+                {
+                    logger.LogInformation("New plugin directory detected: {dir}", e.FullPath);
+                    _ = pluginService.ReloadAsync(e.FullPath);
+                });
+            }
+
+            return;
+        }
+
+        OnChanged(sender, e);
     }
 
     private void OnChanged(object sender, FileSystemEventArgs e)
