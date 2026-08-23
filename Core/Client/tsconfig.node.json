@@ -14,9 +14,8 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
 
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
     },
-    "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": ["node", "vite-plugin-vue-layouts-next/client"]
