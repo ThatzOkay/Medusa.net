@@ -15,7 +15,7 @@ public class AuthPassCardManegementHandler(ICardService cardService) : Handler<A
         Method("authpass");
     }
 
-    public override async Task<AuthPassResponse> HandleAsync(AuthPassRequest req, string model)
+    public override async Task<AuthPassResponse> HandleAsync(AuthPassRequest req, GameModel model)
     {
         var status = 0;
 

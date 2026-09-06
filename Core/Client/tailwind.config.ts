@@ -3,7 +3,7 @@
 import { createMaterialConfig, getLightThemeColors, getDarkThemeColors } from 'tailwind-material-3';
 import plugin from 'tailwindcss/plugin';
 import type { Config } from 'tailwindcss';
-import { colorTokens } from './scripts/generate-material-theme';
+import { colorTokens } from './src/theme/colorTokens';
 
 // `createMaterialConfig` shallow-spreads whatever config we pass over its
 // own defaults (`{ ...defaults, ...userConfig }`), so passing a `theme` or
@@ -17,10 +17,11 @@ const base = createMaterialConfig({
 
 // `getLightThemeColors`/`getDarkThemeColors` are tailwind-material-3's own
 // token->utility mapping functions, fed with our D81B7A-seeded ColorTokens
-// (see scripts/generate-material-theme.ts) — this guarantees the CSS
-// variable names line up exactly with the `md-*` classes its component
-// plugins already emit (e.g. `bg-md-primary`), without us hand-deriving
-// kebab-case key names ourselves.
+// (see src/theme/colorTokens.ts) — this guarantees the CSS variable names
+// line up exactly with the `md-*` classes its component plugins already
+// emit (e.g. `bg-md-primary`), without us hand-deriving kebab-case key
+// names ourselves. The same generateColorTokens() function is reused at
+// runtime by useTheme.ts for the user-customizable seed color.
 const lightColors = getLightThemeColors(colorTokens);
 const darkColors = getDarkThemeColors(colorTokens);
 

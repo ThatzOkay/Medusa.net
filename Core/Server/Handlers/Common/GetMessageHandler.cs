@@ -11,7 +11,7 @@ public class GetMessageHandler: HandlerWithoutRequest<GetMessageResponse>
         Method("get");
     }
 
-    public override GetMessageResponse Handle(string model)
+    public override GetMessageResponse Handle(GameModel model)
     {
         var message = new GetMessageResponse()
         {

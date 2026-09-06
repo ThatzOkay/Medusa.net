@@ -7,7 +7,7 @@ namespace Server.Plugins;
 public sealed class PluginWatcher(IPluginService pluginService, ILogger<PluginWatcher> logger)
     : IHostedService, IDisposable
 {
-    // A single file write typically raises several raw Changed/Created events in a row
+    // A single file write typically raises some raw Changed/Created events in a row
     // (buffered writes, temp-file renames, etc.) - debounce per path so one logical
     // save only triggers one reload instead of a pile of concurrent ones.
     private static readonly TimeSpan DebounceDelay = TimeSpan.FromMilliseconds(400);
@@ -25,20 +25,29 @@ public sealed class PluginWatcher(IPluginService pluginService, ILogger<PluginWa
 
     private FileSystemWatcher CreateWatcher()
     {
-        // Watch everything under plugins/, not just *.dll - a whole plugin subfolder
+        // Watch everything under plugins/, not just *.dll - a plugin's whole subfolder
         // getting deleted (e.g. `rm -rf plugins/Foo`) is a directory-name change, and
-        // filtering to *.dll would never see that entry at all.
+        // filtering to *.dll would never see that entry at all. Size is included alongside
+        // LastWrite because some copy tools preserve the source file's original mtime on
+        // the copy (rsync -a, some GUI file managers) - a redeployed dll with a changed
+        // size but an untouched timestamp would otherwise raise no event at all.
         var watcher = new FileSystemWatcher(_pluginPath)
         {
             IncludeSubdirectories = true,
-            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName |
+                            NotifyFilters.Size
         };
         watcher.Changed += OnChanged;
         watcher.Created += OnCreated;
+        watcher.Renamed += OnRenamed;
         watcher.Deleted += OnDeleted;
         watcher.Error += OnError;
         return watcher;
     }
+
+    // rsync (and similar tools) write via temp file + atomic rename, which shows up as
+    // Renamed, not Changed/Created - route it the same way or those deploys go unseen.
+    private void OnRenamed(object sender, RenamedEventArgs e) => OnCreated(sender, e);
 
     // A dropped/overflowed watcher (e.g. its internal event buffer overflowing because a new
     // plugin folder dumped dozens of dependency dlls in at once) doesn't just miss that burst -
@@ -58,25 +67,45 @@ public sealed class PluginWatcher(IPluginService pluginService, ILogger<PluginWa
     // subdirectory is only registered once this Created event for the directory itself has
     // been processed. If the folder is populated in one fast burst (`cp -r`, an unzip, an
     // installer script that mkdirs then writes) the dlls inside can land during that gap, so
-    // their own Created events are simply never seen. Scan a newly created top-level plugin
-    // folder synchronously right here to catch that case.
+    // their own Created events are simply never seen. A single synchronous check right here
+    // isn't enough either - most copies mkdir the folder first and stream files in afterward,
+    // so the directory can still be empty at the instant this handler runs. Poll for a .dll to
+    // show up instead of taking one snapshot, same debounce delay between checks, and give up
+    // (with a log) after a few seconds rather than polling forever.a
+    private const int NewPluginDirPollAttempts = 10;
+
     private void OnCreated(object sender, FileSystemEventArgs e)
     {
         if (Directory.Exists(e.FullPath) && GetPluginRootDir(e.FullPath) is null)
         {
-            if (Directory.EnumerateFiles(e.FullPath, "*.dll", SearchOption.AllDirectories).Any())
-            {
-                Debounce(e.FullPath, () =>
-                {
-                    logger.LogInformation("New plugin directory detected: {dir}", e.FullPath);
-                    _ = pluginService.ReloadAsync(e.FullPath);
-                });
-            }
-
+            PollNewPluginDir(e.FullPath, attempt: 1);
             return;
         }
 
         OnChanged(sender, e);
+    }
+
+    private void PollNewPluginDir(string dir, int attempt)
+    {
+        Debounce(dir, () =>
+        {
+            if (Directory.EnumerateFiles(dir, "*.dll", SearchOption.AllDirectories).Any())
+            {
+                logger.LogInformation("New plugin directory detected: {dir}", dir);
+                _ = pluginService.ReloadAsync(dir);
+                return;
+            }
+
+            if (attempt >= NewPluginDirPollAttempts)
+            {
+                logger.LogWarning(
+                    "New plugin directory '{dir}' still has no .dll after {attempts} checks; giving up",
+                    dir, NewPluginDirPollAttempts);
+                return;
+            }
+
+            PollNewPluginDir(dir, attempt + 1);
+        });
     }
 
     private void OnChanged(object sender, FileSystemEventArgs e)

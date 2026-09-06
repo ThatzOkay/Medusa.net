@@ -16,7 +16,7 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
         Method("getrefid");
     }
 
-    public override async Task<GetRefIdResponse> HandleAsync(GetRefIdRequest req, string model)
+    public override async Task<GetRefIdResponse> HandleAsync(GetRefIdRequest req, GameModel model)
     {
         var konamiId = cardService.ConvertUidToKonamiId(req.CardId);
         

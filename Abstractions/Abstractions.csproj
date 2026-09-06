@@ -9,6 +9,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AssetsTools.NET" Version="3.0.5" />
+        <PackageReference Include="AssetsTools.NET.Texture" Version="3.0.2" />
+        <PackageReference Include="SkiaSharp" Version="4.151.0" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.151.0" />
+    </ItemGroup>
+
+    <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 

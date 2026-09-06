@@ -20,6 +20,8 @@ const router = useRouter();
 
 const loading = ref(false);
 
+const responseErrorMessage = ref('');
+
 const schema = toTypedSchema(
   yup.object({
     email: yup.string().required('Username or Email is required'),
@@ -31,11 +33,20 @@ const { handleSubmit } = useForm({ validationSchema: schema });
 
 const onFormSubmit = handleSubmit(async (values) => {
   loading.value = true;
+  responseErrorMessage.value = '';
 
-  const result = await AuthenticationService.login({ email: values.email, password: values.password, twoFactorCode: undefined, twoFactorRecoveryCode: undefined });
-  loading.value = false;
-  if (!result.incorrectCredentials) {
-    router.push('/');
+  try {
+    const result = await AuthenticationService.login({ email: values.email, password: values.password, twoFactorCode: undefined, twoFactorRecoveryCode: undefined });
+
+    if (!result.incorrectCredentials && !result.twoFactorRequired) {
+      router.push('/');
+    } else {
+      responseErrorMessage.value = result.errorMessage ?? 'Incorrect username or password.';
+    }
+  } catch (_) {
+  }
+  finally {
+    loading.value = false;
   }
 });
 </script>
@@ -51,6 +62,7 @@ meta:
       <template #title>Login</template>
 
       <template #content>
+        <Message v-if="responseErrorMessage !== ''" severity="error" variant="simple" class="mt-1">{{ responseErrorMessage }}</Message>
         <form class="flex flex-col gap-4" @submit="onFormSubmit">
           <div class="flex flex-col gap-2">
             <label for="email">Username or Email</label>
@@ -72,6 +84,7 @@ meta:
               <Button type="submit" class="w-full" :loading="loading">Login</Button>
             </div>
           </div>
+          <Button type="button" variant="text" class="w-full" @click="() => router.push('/auth/forgotPassword')">Forgot password?</Button>
         </form>
       </template>
     </Card>

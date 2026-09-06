@@ -302,7 +302,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry, Plugin
         {
             try
             {
-                return context.LoadFromAssemblyPath(dllPath);
+                return LoadFromPathAsStream(context, dllPath);
             }
             catch (BadImageFormatException) when (attempt < LoadRetryAttempts)
             {
@@ -319,6 +319,18 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry, Plugin
         } while (attempt <= LoadRetryAttempts);
 
         throw new InvalidOperationException("Failed to load assembly.");
+    }
+
+    private static Assembly LoadFromPathAsStream(PluginLoadContext context, string dllPath)
+    {
+        using var dllStream = new MemoryStream(File.ReadAllBytes(dllPath));
+
+        var pdbPath = Path.ChangeExtension(dllPath, ".pdb");
+        if (!File.Exists(pdbPath))
+            return context.LoadFromStream(dllStream);
+
+        using var pdbStream = new MemoryStream(File.ReadAllBytes(pdbPath));
+        return context.LoadFromStream(dllStream, pdbStream);
     }
 
     // Datecodes are YYYYMMDDXX, e.g. 2025070800 → "2025-07-08 r00"

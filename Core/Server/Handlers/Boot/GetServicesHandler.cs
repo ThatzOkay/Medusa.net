@@ -17,7 +17,7 @@ namespace Server.Handlers.Boot
             Method("get");
         }
 
-        public override GetServicesResponse Handle(string model)
+        public override GetServicesResponse Handle(GameModel model)
         {
             var services = CreateCoreServicesElement();
             return services;

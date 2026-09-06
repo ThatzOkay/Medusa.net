@@ -30,9 +30,14 @@ public static class PluginsApi
             .Produces<PluginUiManifestResponse[]>()
             .RequireAuthorization();
 
+        // Documented as a raw string, not PluginUiEventResponse: the OpenAPI-driven client
+        // codegen (orval) can only describe what a plain fetch() body deserializes to, and for
+        // an SSE stream that's the raw multi-frame text - PluginUiEventResponse only describes
+        // the shape of each individual event, which usePluginLoader.ts's real EventSource
+        // consumer parses out itself, not this endpoint's declared response type.
         pluginsGroup
             .MapGet("/events", StreamEvents)
-            .Produces<PluginUiEventResponse>(200, "text/event-stream");
+            .Produces<string>(200, "text/event-stream");
 
         return group;
     }
@@ -133,14 +138,10 @@ public static class PluginsApi
         return Results.Ok(results);
     }
 
-    internal static string DerivePluginUiId(IMedusaPlugin p) =>
-        (p.MinVer, p.MaxVer) switch
-        {
-            (null, null)         => p.GameCode,
-            (not null, null)     => $"{p.GameCode}-{p.MinVer}",
-            (null, not null)     => $"{p.GameCode}-{p.MaxVer}",
-            (not null, not null) => $"{p.GameCode}-{p.MinVer}-{p.MaxVer}",
-        };
+    // Kept as a thin alias (rather than inlining PluginIdentity.DeriveId at call sites) since
+    // callers here think of it as "the plugin's UI asset id" - PluginIdentity.DeriveId is the
+    // same value, shared with plugin-owned API routes (see Abstractions.PluginEndpointExtensions).
+    internal static string DerivePluginUiId(IMedusaPlugin p) => PluginIdentity.DeriveId(p);
 
     private static async Task StreamEvents(
         PluginUiEventBroadcaster broadcaster,

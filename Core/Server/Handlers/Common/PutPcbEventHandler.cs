@@ -13,7 +13,7 @@ public class PutPcbEventHandler : Handler<PutPcbEventRequest, PutPcbEventRespons
         Method("put");
     }
 
-    public override PutPcbEventResponse Handle(PutPcbEventRequest req, string model)
+    public override PutPcbEventResponse Handle(PutPcbEventRequest req, GameModel model)
     {
         var pcbEvent = new PutPcbEventResponse()
         {

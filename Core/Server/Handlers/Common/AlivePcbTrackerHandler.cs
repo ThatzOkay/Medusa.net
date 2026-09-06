@@ -11,7 +11,7 @@ public class AlivePcbTrackerHandler : HandlerWithoutRequest<AlivePcbTrackerRespo
         Method("alive");
     }
 
-    public override AlivePcbTrackerResponse Handle(string model)
+    public override AlivePcbTrackerResponse Handle(GameModel model)
     {
         var pcbtracker = new AlivePcbTrackerResponse()
         {

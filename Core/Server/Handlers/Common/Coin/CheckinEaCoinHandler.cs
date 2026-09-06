@@ -7,7 +7,7 @@ using Server.Services;
 
 namespace Server.Handlers.Common.Coin;
 
-public class EaCoinCheckinHandler(ICardService cardService, IEaCoinSessionService sessionService) : Handler<EaCoinCheckInRequest, EaCoinCheckInResponse>
+public class CheckinEaCoinHandler(ICardService cardService, IEaCoinSessionService sessionService) : Handler<EaCoinCheckInRequest, EaCoinCheckInResponse>
 {
     public override void Configure()
     {
@@ -15,7 +15,7 @@ public class EaCoinCheckinHandler(ICardService cardService, IEaCoinSessionServic
         Method("checkin");
     }
 
-    public override async Task<EaCoinCheckInResponse> HandleAsync(EaCoinCheckInRequest req, string model)
+    public override async Task<EaCoinCheckInResponse> HandleAsync(EaCoinCheckInRequest req, GameModel model)
     {
         var card = await cardService.FindByCardId(req.CardId);
 

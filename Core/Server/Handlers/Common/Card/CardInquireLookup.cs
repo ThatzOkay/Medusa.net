@@ -1,5 +1,6 @@
 using Abstractions;
 using Abstractions.Entities;
+using Abstractions.Handlers;
 using Abstractions.Services;
 using Server.Services;
 
@@ -22,10 +23,10 @@ internal sealed record CardInquireLookup(
     /// GnInquireCardManagementHandler: resolves the plugin for the model's game code,
     /// converts the card UID to a Konami ID, and checks whether a profile exists for it.
     /// </summary>
-    public static async Task<CardInquireLookup> ResolveAsync(string? cardId, string model,
+    public static async Task<CardInquireLookup> ResolveAsync(string? cardId, GameModel model,
         IPluginService pluginService, ICardService cardService)
     {
-        var gameCode = model.Split(':')[0];
+        var gameCode = model.GameCode;
         var plugin = pluginService.FindPlugin(gameCode);
 
         if (string.IsNullOrEmpty(cardId))

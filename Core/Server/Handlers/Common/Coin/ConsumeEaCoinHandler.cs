@@ -6,7 +6,7 @@ using Server.Services;
 
 namespace Server.Handlers.Common.Coin;
 
-public class EaCoinConsumeHandler(IEaCoinSessionService sessionService, AppDbContext dbContext) : Handler<EaCoinConsumeRequest, EaCoinConsumeResponse>
+public class ConsumeEaCoinHandler(IEaCoinSessionService sessionService, AppDbContext dbContext) : Handler<EaCoinConsumeRequest, EaCoinConsumeResponse>
 {
     public override void Configure()
     {
@@ -14,7 +14,7 @@ public class EaCoinConsumeHandler(IEaCoinSessionService sessionService, AppDbCon
         Method("consume");
     }
 
-    public override async Task<EaCoinConsumeResponse> HandleAsync(EaCoinConsumeRequest req, string model)
+    public override async Task<EaCoinConsumeResponse> HandleAsync(EaCoinConsumeRequest req, GameModel model)
     {
         var session = sessionService.GetSession(req.sessionId);
 

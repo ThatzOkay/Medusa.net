@@ -5,7 +5,7 @@ using Server.Services;
 
 namespace Server.Handlers.Common.Coin;
 
-public class EaCoinCheckoutHandler(IEaCoinSessionService sessionService) : Handler<EaCoinCheckoutRequest, EaCoinCheckoutResponse>
+public class CheckoutEaCoinHandler(IEaCoinSessionService sessionService) : Handler<EaCoinCheckoutRequest, EaCoinCheckoutResponse>
 {
     public override void Configure()
     {
@@ -13,7 +13,7 @@ public class EaCoinCheckoutHandler(IEaCoinSessionService sessionService) : Handl
         Method("checkout");
     }
 
-    public override EaCoinCheckoutResponse Handle(EaCoinCheckoutRequest req, string model)
+    public override EaCoinCheckoutResponse Handle(EaCoinCheckoutRequest req, GameModel model)
     {
         sessionService.RemoveSession(req.sessionId);
 

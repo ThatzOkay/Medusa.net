@@ -12,7 +12,7 @@ public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
         Method("get");
     }
 
-    public override GetFacilityResponse Handle(string model)
+    public override GetFacilityResponse Handle(GameModel model)
     {
         var facility = new GetFacilityResponse()
         {

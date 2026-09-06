@@ -11,16 +11,15 @@ public sealed class PluginLoadContext(string pluginAssemblyPath)
 
     public string AssemblyPath => pluginAssemblyPath;
 
-    // Contract assemblies that every plugin compiles against and the host also has loaded in
-    // its own default AssemblyLoadContext - these must always bind to the host's copy, never a
-    // plugin-local one, or types like IMedusaPlugin end up with two distinct identities (the
-    // host's and the plugin's own), and every `t.GetInterfaces().Contains(typeof(IMedusaPlugin))`
-    // style check silently fails even though the plugin dll loaded fine. A plugin may still ship
-    // its own copy of "Abstractions.dll" locally (e.g. it needs one for `dotnet ef migrations
-    // add` to run standalone) - that copy is intentionally ignored here.
+    // Host-shared contract assemblies. Plugins may ship their own copies for build-time tooling
+    // (e.g. `dotnet ef migrations add`), but at runtime these must resolve to the host's ALC
+    // so that types like IMedusaPlugin and AssetTypeValueField have a single identity.
+    // Without this, `t.GetInterfaces().Contains(typeof(IMedusaPlugin))` silently fails.
     private static readonly HashSet<string> SharedAssemblyNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Abstractions"
+        "Abstractions",
+        "AssetsTools.NET",
+        "AssetsTools.NET.Texture"
     };
 
     protected override Assembly? Load(AssemblyName assemblyName)
@@ -29,7 +28,9 @@ public sealed class PluginLoadContext(string pluginAssemblyPath)
             return null; // fall through to the Default AssemblyLoadContext
 
         var path = _resolver.ResolveAssemblyToPath(assemblyName);
+        if (path is null) return null;
 
-        return path is not null ? LoadFromAssemblyPath(path) : null;
+        using var stream = new MemoryStream(File.ReadAllBytes(path));
+        return LoadFromStream(stream);
     }
 }

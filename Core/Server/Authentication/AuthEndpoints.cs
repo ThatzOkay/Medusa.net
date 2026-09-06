@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
 
 namespace Server.Authentication;
 
@@ -19,7 +20,10 @@ public static class AuthEndpoints
 {
     // Validate the email address using DataAnnotations like the UserValidator does when RequireUniqueEmail = true.
     private static readonly EmailAddressAttribute EmailAddressAttribute = new();
-    
+
+    // Mirrors the client-side pin validation in register.vue: exactly 4 digits.
+    private static readonly Regex PinFormat = new("^\\d{4}$", RegexOptions.Compiled);
+
     public static IEndpointConventionBuilder MapIdentityApi(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
@@ -174,14 +178,11 @@ public static class AuthEndpoints
             }
             else
             {
-                // As with Identity UI, email and user name are one and the same. So when we update the email,
-                // we need to update the user name.
+                // Unlike Identity UI's default assumption, username and email are
+                // independent here (registration collects them separately, and
+                // Settings lets either be changed on its own) — so confirming a
+                // changed email must not also overwrite the username.
                 result = await userManager.ChangeEmailAsync(user, changedEmail, code);
- 
-                if (result.Succeeded)
-                {
-                    result = await userManager.SetUserNameAsync(user, changedEmail);
-                }
             }
  
             if (!result.Succeeded)
@@ -394,7 +395,72 @@ public static class AuthEndpoints
  
             return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
         });
- 
+
+        accountGroup.MapPost("/username", async Task<Results<Ok, ValidationProblem, NotFound>>
+            (ClaimsPrincipal claimsPrincipal, [FromBody] Models.Request.UpdateUsernameRequest usernameRequest, [FromServices] IServiceProvider sp) =>
+        {
+            var userManager = sp.GetRequiredService<UserManager<User>>();
+            if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+            {
+                return TypedResults.NotFound();
+            }
+
+            if (string.IsNullOrWhiteSpace(usernameRequest.NewUsername) || usernameRequest.NewUsername.Length < 3)
+            {
+                return CreateValidationProblem("InvalidUserName",
+                    "Username must be at least 3 characters.");
+            }
+
+            var result = await userManager.SetUserNameAsync(user, usernameRequest.NewUsername);
+            if (!result.Succeeded)
+            {
+                return CreateValidationProblem(result);
+            }
+
+            return TypedResults.Ok();
+        });
+
+        accountGroup.MapGet("/pin", async Task<Results<Ok<Models.Response.PinResponse>, NotFound>>
+            (ClaimsPrincipal claimsPrincipal, [FromServices] IServiceProvider sp) =>
+        {
+            var userManager = sp.GetRequiredService<UserManager<User>>();
+            if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+            {
+                return TypedResults.NotFound();
+            }
+
+            return TypedResults.Ok(new Models.Response.PinResponse { Pin = user.Pin });
+        });
+
+        accountGroup.MapPost("/pin", async Task<Results<Ok, ValidationProblem, NotFound>>
+            (ClaimsPrincipal claimsPrincipal, [FromBody] Models.Request.UpdatePinRequest pinRequest, [FromServices] IServiceProvider sp) =>
+        {
+            var userManager = sp.GetRequiredService<UserManager<User>>();
+            if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+            {
+                return TypedResults.NotFound();
+            }
+
+            if (user.Pin != pinRequest.OldPin)
+            {
+                return CreateValidationProblem("InvalidPin", "The current pin is incorrect.");
+            }
+
+            if (!PinFormat.IsMatch(pinRequest.NewPin))
+            {
+                return CreateValidationProblem("InvalidPin", "Pin must be exactly 4 digits.");
+            }
+
+            user.Pin = pinRequest.NewPin;
+            var result = await userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return CreateValidationProblem(result);
+            }
+
+            return TypedResults.Ok();
+        });
+
         async Task SendConfirmationEmailAsync(User user, UserManager<User> userManager, HttpContext context, string email, bool isChange = false)
         {
             if (confirmEmailEndpointName is null)

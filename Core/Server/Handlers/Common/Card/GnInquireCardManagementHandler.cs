@@ -14,7 +14,7 @@ namespace Server.Handlers.Common.Card
             Method("gninquire");
         }
 
-        public override async Task<GnInquireResponse> HandleAsync(InquireRequest req, string model)
+        public override async Task<GnInquireResponse> HandleAsync(InquireRequest req, GameModel model)
         {
             var lookup = await CardInquireLookup.ResolveAsync(req.CardId, model, pluginService, cardService);
 

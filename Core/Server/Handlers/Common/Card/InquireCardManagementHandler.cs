@@ -14,7 +14,7 @@ public class InquireCardManagementHandler(IPluginService pluginService, ICardSer
         Method("inquire");
     }
 
-    public override async Task<InquireResponse> HandleAsync(InquireRequest req, string model)
+    public override async Task<InquireResponse> HandleAsync(InquireRequest req, GameModel model)
     {
         var lookup = await CardInquireLookup.ResolveAsync(req.CardId, model, pluginService, cardService);
 

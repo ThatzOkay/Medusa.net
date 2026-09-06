@@ -32,18 +32,18 @@ public abstract partial class Handler<TRequest, TResponse>: BaseHandler where TR
     //     this.HandlerMaxVer = maxVer;
     // }
 
-    public virtual TResponse Handle(TRequest req, string model) { throw new NotImplementedException("Handle method not implemented."); }
-    public virtual Task<TResponse> HandleAsync(TRequest req, string model) { throw new NotImplementedException("Handle method not implemented."); }
+    public virtual TResponse Handle(TRequest req, GameModel model) { throw new NotImplementedException("Handle method not implemented."); }
+    public virtual Task<TResponse> HandleAsync(TRequest req, GameModel model) { throw new NotImplementedException("Handle method not implemented."); }
 }
 
 public abstract class HandlerWithoutRequest<TResponse> : Handler<EmptyRequest, TResponse>
 {
-    public virtual TResponse Handle(string model) { throw new NotImplementedException("Handle method not implemented."); }
-    public virtual Task<TResponse> HandleAsync(string model) { throw new NotImplementedException("Handle method not implemented."); }
+    public virtual TResponse Handle(GameModel model) { throw new NotImplementedException("Handle method not implemented."); }
+    public virtual Task<TResponse> HandleAsync(GameModel model) { throw new NotImplementedException("Handle method not implemented."); }
     
-    public sealed override Task<TResponse> HandleAsync(EmptyRequest _, string model)
+    public sealed override Task<TResponse> HandleAsync(EmptyRequest _, GameModel model)
         => HandleAsync(model);
     
-    public sealed override TResponse Handle(EmptyRequest _, string model)
+    public sealed override TResponse Handle(EmptyRequest _, GameModel model)
      => Handle(model);
 }

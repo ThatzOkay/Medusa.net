@@ -12,7 +12,7 @@ public class BindModelCardManagementHandler : Handler<BindModelRequest, BindMode
         Module("cardmng");
         Method("bindmodel");
     }
-    public override BindModelResponse Handle(BindModelRequest req, string model)
+    public override BindModelResponse Handle(BindModelRequest req, GameModel model)
     {
         var bindModel = new BindModelResponse()
         {

@@ -11,7 +11,7 @@ public class ListPackageHandler: HandlerWithoutRequest<ListPackageResponse>
         Method("list");
     }
 
-    public override ListPackageResponse Handle(string model)
+    public override ListPackageResponse Handle(GameModel model)
     {
         var package = new ListPackageResponse()
         {
