@@ -23,6 +23,7 @@
     "@vee-validate/yup": "^4.15.1",
     "@vue/apollo-composable": "^4.2.2",
     "axios": "^1.19.0",
+    "classnames": "^2.5.1",
     "graphql": "16.14.2",
     "pinia": "^4.0.2",
     "qr-scanner": "^1.4.2",
