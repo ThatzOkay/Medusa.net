@@ -4,6 +4,7 @@ using Abstractions.Utils;
 using KbinXml.Net;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server;
@@ -35,6 +36,14 @@ builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<User>()
     .AddEntityFrameworkStores<AppDbContext>();
 
+// AddIdentityApiEndpoints registers a no-op IEmailSender<User> by default; swap it for one that
+// logs confirmation/reset links to the console until a real email sender is wired up.
+// Must be Singleton: MapIdentityApi resolves it once via endpoints.ServiceProvider (the root
+// container, at startup, before any request scope exists) and closes over it for the app's
+// lifetime - a Scoped registration can't be resolved from the root container.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IEmailSender<User>, ConsoleEmailSender>();
+
 builder.Services.AddHandlers();
 
 if (!File.Exists("database/Medusa.db"))
@@ -45,7 +54,8 @@ if (!File.Exists("database/Medusa.db"))
     }
 }
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=database/Medusa.db;"));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=database/Medusa.db;Default Timeout=5;"));
 
 builder.Services.AddIdentityCore<User>(config =>
 {
@@ -88,6 +98,7 @@ builder.Services.AddSingleton(pluginUiBroadcaster);
 var pluginService = new PluginService(logger, pluginRegistry, pluginUiBroadcaster);
 builder.Services.AddSingleton(pluginRegistry);
 builder.Services.AddSingleton<IEaCoinSessionService, EaCoinSessionService>();
+builder.Services.AddSingleton<ISppassSessionService, SppassSessionService>();
 builder.Services.AddSingleton<IPluginService>(pluginService);
 builder.Services.AddHostedService<PluginWatcher>();
 
@@ -139,6 +150,7 @@ app.UseHandlers();
 var apiGroup = app.MapGroup("/api").WithTags("API");
 apiGroup.MapCardsApiEndpoints();
 apiGroup.MapUserApiEndpoints();
+apiGroup.MapCardlessApiEndpoints();
 apiGroup.MapIdentityApi();
 app.MapPluginStaticFiles();
 apiGroup.MapPluginApiEndpoints();
@@ -146,6 +158,15 @@ apiGroup.MapPluginApiEndpoints();
 var eamuseGroup = app.MapGroup("eamuse");
 
 eamuseGroup.MapPost("/{model}/{module}/{method}", (string model, string module, string method,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService,
+    [FromServices] IPluginService pluginService) =>
+{
+    var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
+
+    return HandleEAmuseRoute(amusementRequest, httpContext, logger, handlerService, pluginService);
+});
+
+eamuseGroup.MapPost("/{module}/{model}/{module2}/{method}", (string module, string model, string module2, string method,
     HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService,
     [FromServices] IPluginService pluginService) =>
 {
@@ -184,6 +205,8 @@ await using var scope = app.Services.CreateAsyncScope();
 var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
 await appDbContext.Database.MigrateAsync();
+
+await appDbContext.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
 
 app.Run();
 return;
@@ -252,9 +275,9 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
     var plugins = pluginService.GetPlugins();
     var forcedEncoding = plugins.FirstOrDefault(p => p.GameCode == request.Model.Split(":")[0])?.ForcedEncoding;
 
-    var encodingEnum = encoding switch
+    var encodingEnum = encoding.ToLowerInvariant() switch
     {
-        "shift_jis" or "ShiftJIS" or "SHIFT_JIS" => KnownEncodings.ShiftJIS,
+        "shift_jis" or "shiftjis" => KnownEncodings.ShiftJIS,
         "us-ascii" => KnownEncodings.ASCII,
         "utf-8" => KnownEncodings.UTF8,
         "euc-jp" => KnownEncodings.EUC_JP,

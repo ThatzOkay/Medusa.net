@@ -18,6 +18,8 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
     public async Task<XDocument> Handle(string model, string module, string method, XDocument body)
     {
+        var gameModel = GameModel.Parse(model);
+
         // ── Built-in server handlers (host SP) ──────────────────────────────
         foreach(var handler in Handlers)
         {
@@ -27,7 +29,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
             if(handlerAttribute is null)
             {
                 await using var hostScope = _serviceScopeFactory.CreateAsyncScope();
-                var response = await HandleInheritanceClass(handler, model, module, method, body, hostScope.ServiceProvider);
+                var response = await HandleInheritanceClass(handler, gameModel, module, method, body, hostScope.ServiceProvider);
 
                 if(response is not null)
                 {
@@ -64,18 +66,19 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
             foreach (var handlerType in slot.HandlerTypes)
             {
-                var result = await HandleInheritanceClass(handlerType, model, module, method, body, composite);
+                var result = await HandleInheritanceClass(handlerType, gameModel, module, method, body, composite);
                 if (result is not null) return result;
             }
         }
 
         //If no handler is found return an empty document
         _logger.LogWarning("No handler found for {model}/{module}/{method}", model, module, method);
+        _logger.LogWarning("Document was {document}", body);
 
         return new XDocument();
     }
 
-    private async Task<XDocument?> HandleInheritanceClass(Type handler, string model, string module, string method, XDocument body, IServiceProvider serviceProvider)
+    private async Task<XDocument?> HandleInheritanceClass(Type handler, GameModel model, string module, string method, XDocument body, IServiceProvider serviceProvider)
     {
         var isHandlerWithoutRequest = false;
 
@@ -122,8 +125,6 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
             return null;
         }
 
-        var modelParts = model.Split(':');
-
         var handlerModule = handlerInstance.Definition.HandlerModule;
         var handlerMethod = handlerInstance.Definition.HandlerMethod;
         var handlerGameCode = handlerInstance.Definition.HandlerGameCode;
@@ -144,26 +145,22 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
 
         if(!string.IsNullOrEmpty(handlerGameCode))
         {
-            if(handlerGameCode != modelParts[0])
+            if(handlerGameCode != model.GameCode)
                 return null;
         }
 
-        var version = string.Join(string.Empty, modelParts.Skip(4));
-
         if(!string.IsNullOrEmpty(handlerMinVer))
         {
-            var parsedVersion = int.Parse(version);
-            var parsedMinVer = int.Parse(handlerMinVer);
+            var parsedMinVer = long.Parse(handlerMinVer);
 
-            if(parsedVersion < parsedMinVer)
+            if(model.Version < parsedMinVer)
                 return null;
         }
 
         if(!string.IsNullOrEmpty(handlerMaxVer))
         {
-            var parsedVersion = int.Parse(version);
-            var parsedMaxVer = int.Parse(handlerMaxVer);
-            if(parsedVersion > parsedMaxVer)
+            var parsedMaxVer = long.Parse(handlerMaxVer);
+            if(model.Version > parsedMaxVer)
                 return null;
         }
 
