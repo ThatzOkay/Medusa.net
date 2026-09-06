@@ -6,6 +6,7 @@
  */
 
 export * from './accessTokenResponse';
+export * from './approveSessionResponse';
 export * from './cardDto';
 export * from './claim';
 export * from './claimProperties';
@@ -17,6 +18,10 @@ export * from './infoRequest';
 export * from './infoResponse';
 export * from './loginRequest';
 export * from './mapIdentityApiApiAuthConfirmEmailParams';
+export * from './pinResponse';
+export * from './pluginNavItem';
+export * from './pluginRoute';
+export * from './pluginUiManifestResponse';
 export * from './postApiAuthLoginParams';
 export * from './postEamuseMParams';
 export * from './postEamuseParams';
@@ -26,5 +31,7 @@ export * from './resendConfirmationEmailRequest';
 export * from './resetPasswordRequest';
 export * from './twoFactorRequest';
 export * from './twoFactorResponse';
+export * from './updatePinRequest';
+export * from './updateUsernameRequest';
 export * from './validateCardRequest';
 export * from './validateCardResponse';

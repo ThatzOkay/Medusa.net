@@ -21,6 +21,7 @@ import type {
 } from '@tanstack/vue-query';
 
 import {
+  computed,
   toValue,
   unref
 } from 'vue';
@@ -30,6 +31,7 @@ import type {
 
 import type {
   AccessTokenResponse,
+  ApproveSessionResponse,
   CardDto,
   Claim,
   ForgotPasswordRequest,
@@ -38,6 +40,8 @@ import type {
   InfoResponse,
   LoginRequest,
   MapIdentityApiApiAuthConfirmEmailParams,
+  PinResponse,
+  PluginUiManifestResponse,
   PostApiAuthLoginParams,
   PostEamuseMParams,
   PostEamuseParams,
@@ -47,9 +51,106 @@ import type {
   ResetPasswordRequest,
   TwoFactorRequest,
   TwoFactorResponse,
+  UpdatePinRequest,
+  UpdateUsernameRequest,
   ValidateCardRequest,
   ValidateCardResponse
 } from '../types/api';
+
+import { customFetch } from './customFetch';
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+export type getPluginAssetsPluginUiIdFilePathResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getPluginAssetsPluginUiIdFilePathResponseSuccess = (getPluginAssetsPluginUiIdFilePathResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getPluginAssetsPluginUiIdFilePathResponse = (getPluginAssetsPluginUiIdFilePathResponseSuccess)
+
+export const getGetPluginAssetsPluginUiIdFilePathUrl = (pluginUiId: string,
+    filePath: string,) => {
+
+
+
+
+  return `/pluginAssets/${pluginUiId}/${filePath}`
+}
+
+export const getPluginAssetsPluginUiIdFilePath = async (pluginUiId: string,
+    filePath: string, options?: Parameters<typeof customFetch>[1]): Promise<getPluginAssetsPluginUiIdFilePathResponse> => {
+
+  return customFetch<getPluginAssetsPluginUiIdFilePathResponse>(getGetPluginAssetsPluginUiIdFilePathUrl(pluginUiId,filePath),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPluginAssetsPluginUiIdFilePathQueryKey = (pluginUiId: MaybeRefOrGetter<string>,
+    filePath: MaybeRefOrGetter<string>,) => {
+    return [
+    'pluginAssets',pluginUiId,filePath
+    ] as const;
+    }
+
+
+export const getGetPluginAssetsPluginUiIdFilePathQueryOptions = <TData = Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>, TError = unknown>(pluginUiId: MaybeRefOrGetter<string>,
+    filePath: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetPluginAssetsPluginUiIdFilePathQueryKey(pluginUiId,filePath);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>> = ({ signal }) => getPluginAssetsPluginUiIdFilePath(toValue(pluginUiId),toValue(filePath), { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(pluginUiId) !== null && toValue(pluginUiId) !== undefined && toValue(filePath) !== null && toValue(filePath) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>, TError, TData>
+}
+
+export type GetPluginAssetsPluginUiIdFilePathQueryResult = NonNullable<Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>>
+export type GetPluginAssetsPluginUiIdFilePathQueryError = unknown
+
+
+
+export function useGetPluginAssetsPluginUiIdFilePath<TData = Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>, TError = unknown>(
+ pluginUiId: MaybeRefOrGetter<string>,
+    filePath: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPluginAssetsPluginUiIdFilePath>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPluginAssetsPluginUiIdFilePathQueryOptions(pluginUiId,filePath,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
 
 export type postApiCardsValidateResponse200 = {
   data: ValidateCardResponse
@@ -71,38 +172,31 @@ export const getPostApiCardsValidateUrl = () => {
   return `/api/cards/validate`
 }
 
-export const postApiCardsValidate = async (validateCardRequest: ValidateCardRequest, options?: RequestInit): Promise<postApiCardsValidateResponse> => {
+export const postApiCardsValidate = async (validateCardRequest: ValidateCardRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiCardsValidateResponse> => {
 
-  const res = await fetch(getPostApiCardsValidateUrl(),
+  return customFetch<postApiCardsValidateResponse>(getPostApiCardsValidateUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(validateCardRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiCardsValidateResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postApiCardsValidateResponse
-}
+);}
 
 
 
 
 
 export const getPostApiCardsValidateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiCardsValidate>>, TError,{data: ValidateCardRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiCardsValidate>>, TError,{data: ValidateCardRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiCardsValidate>>, TError,{data: ValidateCardRequest}, TContext> => {
 
 const mutationKey = ['postApiCardsValidate'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -110,7 +204,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiCardsValidate>>, {data: ValidateCardRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiCardsValidate(data,fetchOptions)
+          return  postApiCardsValidate(data,requestOptions)
         }
 
 
@@ -125,7 +219,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiCardsValidateMutationError = unknown
 
     export const usePostApiCardsValidate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiCardsValidate>>, TError,{data: ValidateCardRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiCardsValidate>>, TError,{data: ValidateCardRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiCardsValidate>>,
         TError,
@@ -155,23 +249,16 @@ export const getGetApiCardsMyUrl = () => {
   return `/api/cards/my`
 }
 
-export const getApiCardsMy = async ( options?: RequestInit): Promise<getApiCardsMyResponse> => {
+export const getApiCardsMy = async ( options?: Parameters<typeof customFetch>[1]): Promise<getApiCardsMyResponse> => {
 
-  const res = await fetch(getGetApiCardsMyUrl(),
+  return customFetch<getApiCardsMyResponse>(getGetApiCardsMyUrl(),
   {
     ...options,
     method: 'GET'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getApiCardsMyResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getApiCardsMyResponse
-}
+);}
 
 
 
@@ -184,16 +271,16 @@ export const getGetApiCardsMyQueryKey = () => {
     }
 
 
-export const getGetApiCardsMyQueryOptions = <TData = Awaited<ReturnType<typeof getApiCardsMy>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCardsMy>>, TError, TData>>, fetch?: RequestInit}
+export const getGetApiCardsMyQueryOptions = <TData = Awaited<ReturnType<typeof getApiCardsMy>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCardsMy>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  getGetApiCardsMyQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiCardsMy>>> = ({ signal }) => getApiCardsMy({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiCardsMy>>> = ({ signal }) => getApiCardsMy({ signal, ...requestOptions });
 
 
 
@@ -208,7 +295,7 @@ export type GetApiCardsMyQueryError = unknown
 
 
 export function useGetApiCardsMy<TData = Awaited<ReturnType<typeof getApiCardsMy>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCardsMy>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCardsMy>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -247,23 +334,16 @@ export const getGetApiUserClaimsUrl = () => {
   return `/api/user/claims`
 }
 
-export const getApiUserClaims = async ( options?: RequestInit): Promise<getApiUserClaimsResponse> => {
+export const getApiUserClaims = async ( options?: Parameters<typeof customFetch>[1]): Promise<getApiUserClaimsResponse> => {
 
-  const res = await fetch(getGetApiUserClaimsUrl(),
+  return customFetch<getApiUserClaimsResponse>(getGetApiUserClaimsUrl(),
   {
     ...options,
     method: 'GET'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getApiUserClaimsResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getApiUserClaimsResponse
-}
+);}
 
 
 
@@ -276,16 +356,16 @@ export const getGetApiUserClaimsQueryKey = () => {
     }
 
 
-export const getGetApiUserClaimsQueryOptions = <TData = Awaited<ReturnType<typeof getApiUserClaims>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiUserClaims>>, TError, TData>>, fetch?: RequestInit}
+export const getGetApiUserClaimsQueryOptions = <TData = Awaited<ReturnType<typeof getApiUserClaims>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiUserClaims>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  getGetApiUserClaimsQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiUserClaims>>> = ({ signal }) => getApiUserClaims({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiUserClaims>>> = ({ signal }) => getApiUserClaims({ signal, ...requestOptions });
 
 
 
@@ -300,7 +380,7 @@ export type GetApiUserClaimsQueryError = unknown
 
 
 export function useGetApiUserClaims<TData = Awaited<ReturnType<typeof getApiUserClaims>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiUserClaims>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiUserClaims>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -318,6 +398,95 @@ export function useGetApiUserClaims<TData = Awaited<ReturnType<typeof getApiUser
 
 
 
+
+export type postApiCardlessTokenApproveResponse200 = {
+  data: ApproveSessionResponse
+  status: 200
+}
+
+export type postApiCardlessTokenApproveResponse400 = {
+  data: ApproveSessionResponse
+  status: 400
+}
+
+export type postApiCardlessTokenApproveResponse404 = {
+  data: ApproveSessionResponse
+  status: 404
+}
+
+export type postApiCardlessTokenApproveResponseSuccess = (postApiCardlessTokenApproveResponse200) & {
+  headers: Headers;
+};
+export type postApiCardlessTokenApproveResponseError = (postApiCardlessTokenApproveResponse400 | postApiCardlessTokenApproveResponse404) & {
+  headers: Headers;
+};
+
+export type postApiCardlessTokenApproveResponse = (postApiCardlessTokenApproveResponseSuccess | postApiCardlessTokenApproveResponseError)
+
+export const getPostApiCardlessTokenApproveUrl = (token: string,) => {
+
+
+
+
+  return `/api/cardless/${token}/approve`
+}
+
+export const postApiCardlessTokenApprove = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<postApiCardlessTokenApproveResponse> => {
+
+  return customFetch<postApiCardlessTokenApproveResponse>(getPostApiCardlessTokenApproveUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getPostApiCardlessTokenApproveMutationOptions = <TError = ApproveSessionResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiCardlessTokenApprove>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiCardlessTokenApprove>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['postApiCardlessTokenApprove'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiCardlessTokenApprove>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  postApiCardlessTokenApprove(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiCardlessTokenApproveMutationResult = NonNullable<Awaited<ReturnType<typeof postApiCardlessTokenApprove>>>
+
+    export type PostApiCardlessTokenApproveMutationError = ApproveSessionResponse
+
+    export const usePostApiCardlessTokenApprove = <TError = ApproveSessionResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiCardlessTokenApprove>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof postApiCardlessTokenApprove>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+      return useMutation(getPostApiCardlessTokenApproveMutationOptions(options), queryClient);
+    }
 
 export type postApiAuthRegisterResponse200 = {
   data: void
@@ -346,38 +515,31 @@ export const getPostApiAuthRegisterUrl = () => {
   return `/api/auth/register`
 }
 
-export const postApiAuthRegister = async (registerRequest: RegisterRequest, options?: RequestInit): Promise<postApiAuthRegisterResponse> => {
+export const postApiAuthRegister = async (registerRequest: RegisterRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthRegisterResponse> => {
 
-  const res = await fetch(getPostApiAuthRegisterUrl(),
+  return customFetch<postApiAuthRegisterResponse>(getPostApiAuthRegisterUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(registerRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthRegisterResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postApiAuthRegisterResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthRegisterMutationOptions = <TError = HttpValidationProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRegister>>, TError,{data: RegisterRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRegister>>, TError,{data: RegisterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRegister>>, TError,{data: RegisterRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthRegister'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -385,7 +547,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthRegister>>, {data: RegisterRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthRegister(data,fetchOptions)
+          return  postApiAuthRegister(data,requestOptions)
         }
 
 
@@ -400,7 +562,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthRegisterMutationError = HttpValidationProblemDetails
 
     export const usePostApiAuthRegister = <TError = HttpValidationProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRegister>>, TError,{data: RegisterRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRegister>>, TError,{data: RegisterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthRegister>>,
         TError,
@@ -438,38 +600,31 @@ export const getPostApiAuthLoginUrl = (params?: PostApiAuthLoginParams,) => {
 }
 
 export const postApiAuthLogin = async (loginRequest: LoginRequest,
-    params?: PostApiAuthLoginParams, options?: RequestInit): Promise<postApiAuthLoginResponse> => {
+    params?: PostApiAuthLoginParams, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthLoginResponse> => {
 
-  const res = await fetch(getPostApiAuthLoginUrl(params),
+  return customFetch<postApiAuthLoginResponse>(getPostApiAuthLoginUrl(params),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(loginRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthLoginResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postApiAuthLoginResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthLoginMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogin>>, TError,{data: LoginRequest;params?: PostApiAuthLoginParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogin>>, TError,{data: LoginRequest;params?: PostApiAuthLoginParams}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogin>>, TError,{data: LoginRequest;params?: PostApiAuthLoginParams}, TContext> => {
 
 const mutationKey = ['postApiAuthLogin'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -477,7 +632,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthLogin>>, {data: LoginRequest;params?: PostApiAuthLoginParams}> = (props) => {
           const {data,params} = props ?? {};
 
-          return  postApiAuthLogin(data,params,fetchOptions)
+          return  postApiAuthLogin(data,params,requestOptions)
         }
 
 
@@ -492,7 +647,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthLoginMutationError = unknown
 
     export const usePostApiAuthLogin = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogin>>, TError,{data: LoginRequest;params?: PostApiAuthLoginParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogin>>, TError,{data: LoginRequest;params?: PostApiAuthLoginParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthLogin>>,
         TError,
@@ -522,38 +677,31 @@ export const getPostApiAuthRefreshUrl = () => {
   return `/api/auth/refresh`
 }
 
-export const postApiAuthRefresh = async (refreshRequest: RefreshRequest, options?: RequestInit): Promise<postApiAuthRefreshResponse> => {
+export const postApiAuthRefresh = async (refreshRequest: RefreshRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthRefreshResponse> => {
 
-  const res = await fetch(getPostApiAuthRefreshUrl(),
+  return customFetch<postApiAuthRefreshResponse>(getPostApiAuthRefreshUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(refreshRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthRefreshResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postApiAuthRefreshResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthRefreshMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: RefreshRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: RefreshRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: RefreshRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthRefresh'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -561,7 +709,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthRefresh>>, {data: RefreshRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthRefresh(data,fetchOptions)
+          return  postApiAuthRefresh(data,requestOptions)
         }
 
 
@@ -576,7 +724,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthRefreshMutationError = unknown
 
     export const usePostApiAuthRefresh = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: RefreshRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: RefreshRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthRefresh>>,
         TError,
@@ -613,23 +761,16 @@ export const getMapIdentityApiApiAuthConfirmEmailUrl = (params: MapIdentityApiAp
   return stringifiedParams.length > 0 ? `/api/auth/confirmEmail?${stringifiedParams}` : `/api/auth/confirmEmail`
 }
 
-export const mapIdentityApiApiAuthConfirmEmail = async (params: MapIdentityApiApiAuthConfirmEmailParams, options?: RequestInit): Promise<mapIdentityApiApiAuthConfirmEmailResponse> => {
+export const mapIdentityApiApiAuthConfirmEmail = async (params: MapIdentityApiApiAuthConfirmEmailParams, options?: Parameters<typeof customFetch>[1]): Promise<mapIdentityApiApiAuthConfirmEmailResponse> => {
 
-  const res = await fetch(getMapIdentityApiApiAuthConfirmEmailUrl(params),
+  return customFetch<mapIdentityApiApiAuthConfirmEmailResponse>(getMapIdentityApiApiAuthConfirmEmailUrl(params),
   {
     ...options,
     method: 'GET'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: mapIdentityApiApiAuthConfirmEmailResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as mapIdentityApiApiAuthConfirmEmailResponse
-}
+);}
 
 
 
@@ -642,16 +783,16 @@ export const getMapIdentityApiApiAuthConfirmEmailQueryKey = (params?: MaybeRefOr
     }
 
 
-export const getMapIdentityApiApiAuthConfirmEmailQueryOptions = <TData = Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError = unknown>(params: MaybeRefOrGetter<MapIdentityApiApiAuthConfirmEmailParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError, TData>>, fetch?: RequestInit}
+export const getMapIdentityApiApiAuthConfirmEmailQueryOptions = <TData = Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError = unknown>(params: MaybeRefOrGetter<MapIdentityApiApiAuthConfirmEmailParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  getMapIdentityApiApiAuthConfirmEmailQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>> = ({ signal }) => mapIdentityApiApiAuthConfirmEmail(toValue(params), { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>> = ({ signal }) => mapIdentityApiApiAuthConfirmEmail(toValue(params), { signal, ...requestOptions });
 
 
 
@@ -666,7 +807,7 @@ export type MapIdentityApiApiAuthConfirmEmailQueryError = unknown
 
 
 export function useMapIdentityApiApiAuthConfirmEmail<TData = Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError = unknown>(
- params: MaybeRefOrGetter<MapIdentityApiApiAuthConfirmEmailParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError, TData>>, fetch?: RequestInit}
+ params: MaybeRefOrGetter<MapIdentityApiApiAuthConfirmEmailParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mapIdentityApiApiAuthConfirmEmail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -705,38 +846,31 @@ export const getPostApiAuthResendConfirmationEmailUrl = () => {
   return `/api/auth/resendConfirmationEmail`
 }
 
-export const postApiAuthResendConfirmationEmail = async (resendConfirmationEmailRequest: ResendConfirmationEmailRequest, options?: RequestInit): Promise<postApiAuthResendConfirmationEmailResponse> => {
+export const postApiAuthResendConfirmationEmail = async (resendConfirmationEmailRequest: ResendConfirmationEmailRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthResendConfirmationEmailResponse> => {
 
-  const res = await fetch(getPostApiAuthResendConfirmationEmailUrl(),
+  return customFetch<postApiAuthResendConfirmationEmailResponse>(getPostApiAuthResendConfirmationEmailUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(resendConfirmationEmailRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthResendConfirmationEmailResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postApiAuthResendConfirmationEmailResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthResendConfirmationEmailMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>, TError,{data: ResendConfirmationEmailRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>, TError,{data: ResendConfirmationEmailRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>, TError,{data: ResendConfirmationEmailRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthResendConfirmationEmail'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -744,7 +878,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>, {data: ResendConfirmationEmailRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthResendConfirmationEmail(data,fetchOptions)
+          return  postApiAuthResendConfirmationEmail(data,requestOptions)
         }
 
 
@@ -759,7 +893,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthResendConfirmationEmailMutationError = unknown
 
     export const usePostApiAuthResendConfirmationEmail = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>, TError,{data: ResendConfirmationEmailRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>, TError,{data: ResendConfirmationEmailRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthResendConfirmationEmail>>,
         TError,
@@ -796,38 +930,31 @@ export const getPostApiAuthForgotPasswordUrl = () => {
   return `/api/auth/forgotPassword`
 }
 
-export const postApiAuthForgotPassword = async (forgotPasswordRequest: ForgotPasswordRequest, options?: RequestInit): Promise<postApiAuthForgotPasswordResponse> => {
+export const postApiAuthForgotPassword = async (forgotPasswordRequest: ForgotPasswordRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthForgotPasswordResponse> => {
 
-  const res = await fetch(getPostApiAuthForgotPasswordUrl(),
+  return customFetch<postApiAuthForgotPasswordResponse>(getPostApiAuthForgotPasswordUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(forgotPasswordRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthForgotPasswordResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postApiAuthForgotPasswordResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthForgotPasswordMutationOptions = <TError = HttpValidationProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthForgotPassword>>, TError,{data: ForgotPasswordRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthForgotPassword>>, TError,{data: ForgotPasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthForgotPassword>>, TError,{data: ForgotPasswordRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthForgotPassword'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -835,7 +962,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthForgotPassword>>, {data: ForgotPasswordRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthForgotPassword(data,fetchOptions)
+          return  postApiAuthForgotPassword(data,requestOptions)
         }
 
 
@@ -850,7 +977,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthForgotPasswordMutationError = HttpValidationProblemDetails
 
     export const usePostApiAuthForgotPassword = <TError = HttpValidationProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthForgotPassword>>, TError,{data: ForgotPasswordRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthForgotPassword>>, TError,{data: ForgotPasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthForgotPassword>>,
         TError,
@@ -887,38 +1014,31 @@ export const getPostApiAuthResetPasswordUrl = () => {
   return `/api/auth/resetPassword`
 }
 
-export const postApiAuthResetPassword = async (resetPasswordRequest: ResetPasswordRequest, options?: RequestInit): Promise<postApiAuthResetPasswordResponse> => {
+export const postApiAuthResetPassword = async (resetPasswordRequest: ResetPasswordRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthResetPasswordResponse> => {
 
-  const res = await fetch(getPostApiAuthResetPasswordUrl(),
+  return customFetch<postApiAuthResetPasswordResponse>(getPostApiAuthResetPasswordUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(resetPasswordRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthResetPasswordResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postApiAuthResetPasswordResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthResetPasswordMutationOptions = <TError = HttpValidationProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResetPassword>>, TError,{data: ResetPasswordRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResetPassword>>, TError,{data: ResetPasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResetPassword>>, TError,{data: ResetPasswordRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthResetPassword'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -926,7 +1046,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthResetPassword>>, {data: ResetPasswordRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthResetPassword(data,fetchOptions)
+          return  postApiAuthResetPassword(data,requestOptions)
         }
 
 
@@ -941,7 +1061,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthResetPasswordMutationError = HttpValidationProblemDetails
 
     export const usePostApiAuthResetPassword = <TError = HttpValidationProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResetPassword>>, TError,{data: ResetPasswordRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthResetPassword>>, TError,{data: ResetPasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthResetPassword>>,
         TError,
@@ -983,38 +1103,31 @@ export const getPostApiAuthManage2faUrl = () => {
   return `/api/auth/manage/2fa`
 }
 
-export const postApiAuthManage2fa = async (twoFactorRequest: TwoFactorRequest, options?: RequestInit): Promise<postApiAuthManage2faResponse> => {
+export const postApiAuthManage2fa = async (twoFactorRequest: TwoFactorRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthManage2faResponse> => {
 
-  const res = await fetch(getPostApiAuthManage2faUrl(),
+  return customFetch<postApiAuthManage2faResponse>(getPostApiAuthManage2faUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(twoFactorRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthManage2faResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postApiAuthManage2faResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthManage2faMutationOptions = <TError = HttpValidationProblemDetails | void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManage2fa>>, TError,{data: TwoFactorRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManage2fa>>, TError,{data: TwoFactorRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManage2fa>>, TError,{data: TwoFactorRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthManage2fa'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -1022,7 +1135,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthManage2fa>>, {data: TwoFactorRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthManage2fa(data,fetchOptions)
+          return  postApiAuthManage2fa(data,requestOptions)
         }
 
 
@@ -1037,7 +1150,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthManage2faMutationError = HttpValidationProblemDetails | void
 
     export const usePostApiAuthManage2fa = <TError = HttpValidationProblemDetails | void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManage2fa>>, TError,{data: TwoFactorRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManage2fa>>, TError,{data: TwoFactorRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthManage2fa>>,
         TError,
@@ -1079,23 +1192,16 @@ export const getGetApiAuthManageInfoUrl = () => {
   return `/api/auth/manage/info`
 }
 
-export const getApiAuthManageInfo = async ( options?: RequestInit): Promise<getApiAuthManageInfoResponse> => {
+export const getApiAuthManageInfo = async ( options?: Parameters<typeof customFetch>[1]): Promise<getApiAuthManageInfoResponse> => {
 
-  const res = await fetch(getGetApiAuthManageInfoUrl(),
+  return customFetch<getApiAuthManageInfoResponse>(getGetApiAuthManageInfoUrl(),
   {
     ...options,
     method: 'GET'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getApiAuthManageInfoResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getApiAuthManageInfoResponse
-}
+);}
 
 
 
@@ -1108,16 +1214,16 @@ export const getGetApiAuthManageInfoQueryKey = () => {
     }
 
 
-export const getGetApiAuthManageInfoQueryOptions = <TData = Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError = HttpValidationProblemDetails | void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError, TData>>, fetch?: RequestInit}
+export const getGetApiAuthManageInfoQueryOptions = <TData = Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError = HttpValidationProblemDetails | void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  getGetApiAuthManageInfoQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiAuthManageInfo>>> = ({ signal }) => getApiAuthManageInfo({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiAuthManageInfo>>> = ({ signal }) => getApiAuthManageInfo({ signal, ...requestOptions });
 
 
 
@@ -1132,7 +1238,7 @@ export type GetApiAuthManageInfoQueryError = HttpValidationProblemDetails | void
 
 
 export function useGetApiAuthManageInfo<TData = Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError = HttpValidationProblemDetails | void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManageInfo>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1183,38 +1289,31 @@ export const getPostApiAuthManageInfoUrl = () => {
   return `/api/auth/manage/info`
 }
 
-export const postApiAuthManageInfo = async (infoRequest: InfoRequest, options?: RequestInit): Promise<postApiAuthManageInfoResponse> => {
+export const postApiAuthManageInfo = async (infoRequest: InfoRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthManageInfoResponse> => {
 
-  const res = await fetch(getPostApiAuthManageInfoUrl(),
+  return customFetch<postApiAuthManageInfoResponse>(getPostApiAuthManageInfoUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(infoRequest)
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postApiAuthManageInfoResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postApiAuthManageInfoResponse
-}
+);}
 
 
 
 
 
 export const getPostApiAuthManageInfoMutationOptions = <TError = HttpValidationProblemDetails | void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageInfo>>, TError,{data: InfoRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageInfo>>, TError,{data: InfoRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageInfo>>, TError,{data: InfoRequest}, TContext> => {
 
 const mutationKey = ['postApiAuthManageInfo'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -1222,7 +1321,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthManageInfo>>, {data: InfoRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiAuthManageInfo(data,fetchOptions)
+          return  postApiAuthManageInfo(data,requestOptions)
         }
 
 
@@ -1237,7 +1336,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostApiAuthManageInfoMutationError = HttpValidationProblemDetails | void
 
     export const usePostApiAuthManageInfo = <TError = HttpValidationProblemDetails | void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageInfo>>, TError,{data: InfoRequest}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageInfo>>, TError,{data: InfoRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postApiAuthManageInfo>>,
         TError,
@@ -1246,6 +1345,446 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getPostApiAuthManageInfoMutationOptions(options), queryClient);
     }
+
+export type postApiAuthManageUsernameResponse200 = {
+  data: void
+  status: 200
+}
+
+export type postApiAuthManageUsernameResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
+export type postApiAuthManageUsernameResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiAuthManageUsernameResponseSuccess = (postApiAuthManageUsernameResponse200) & {
+  headers: Headers;
+};
+export type postApiAuthManageUsernameResponseError = (postApiAuthManageUsernameResponse400 | postApiAuthManageUsernameResponse404) & {
+  headers: Headers;
+};
+
+export type postApiAuthManageUsernameResponse = (postApiAuthManageUsernameResponseSuccess | postApiAuthManageUsernameResponseError)
+
+export const getPostApiAuthManageUsernameUrl = () => {
+
+
+
+
+  return `/api/auth/manage/username`
+}
+
+export const postApiAuthManageUsername = async (updateUsernameRequest: UpdateUsernameRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthManageUsernameResponse> => {
+
+  return customFetch<postApiAuthManageUsernameResponse>(getPostApiAuthManageUsernameUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateUsernameRequest)
+  }
+);}
+
+
+
+
+
+export const getPostApiAuthManageUsernameMutationOptions = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageUsername>>, TError,{data: UpdateUsernameRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageUsername>>, TError,{data: UpdateUsernameRequest}, TContext> => {
+
+const mutationKey = ['postApiAuthManageUsername'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthManageUsername>>, {data: UpdateUsernameRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiAuthManageUsername(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiAuthManageUsernameMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAuthManageUsername>>>
+    export type PostApiAuthManageUsernameMutationBody = UpdateUsernameRequest
+    export type PostApiAuthManageUsernameMutationError = HttpValidationProblemDetails | void
+
+    export const usePostApiAuthManageUsername = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManageUsername>>, TError,{data: UpdateUsernameRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof postApiAuthManageUsername>>,
+        TError,
+        {data: UpdateUsernameRequest},
+        TContext
+      > => {
+      return useMutation(getPostApiAuthManageUsernameMutationOptions(options), queryClient);
+    }
+
+export type getApiAuthManagePinResponse200 = {
+  data: PinResponse
+  status: 200
+}
+
+export type getApiAuthManagePinResponse404 = {
+  data: void
+  status: 404
+}
+
+export type getApiAuthManagePinResponseSuccess = (getApiAuthManagePinResponse200) & {
+  headers: Headers;
+};
+export type getApiAuthManagePinResponseError = (getApiAuthManagePinResponse404) & {
+  headers: Headers;
+};
+
+export type getApiAuthManagePinResponse = (getApiAuthManagePinResponseSuccess | getApiAuthManagePinResponseError)
+
+export const getGetApiAuthManagePinUrl = () => {
+
+
+
+
+  return `/api/auth/manage/pin`
+}
+
+export const getApiAuthManagePin = async ( options?: Parameters<typeof customFetch>[1]): Promise<getApiAuthManagePinResponse> => {
+
+  return customFetch<getApiAuthManagePinResponse>(getGetApiAuthManagePinUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetApiAuthManagePinQueryKey = () => {
+    return [
+    'api','auth','manage','pin'
+    ] as const;
+    }
+
+
+export const getGetApiAuthManagePinQueryOptions = <TData = Awaited<ReturnType<typeof getApiAuthManagePin>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManagePin>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetApiAuthManagePinQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiAuthManagePin>>> = ({ signal }) => getApiAuthManagePin({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManagePin>>, TError, TData>
+}
+
+export type GetApiAuthManagePinQueryResult = NonNullable<Awaited<ReturnType<typeof getApiAuthManagePin>>>
+export type GetApiAuthManagePinQueryError = void
+
+
+
+export function useGetApiAuthManagePin<TData = Awaited<ReturnType<typeof getApiAuthManagePin>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthManagePin>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiAuthManagePinQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+
+export type postApiAuthManagePinResponse200 = {
+  data: void
+  status: 200
+}
+
+export type postApiAuthManagePinResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
+export type postApiAuthManagePinResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiAuthManagePinResponseSuccess = (postApiAuthManagePinResponse200) & {
+  headers: Headers;
+};
+export type postApiAuthManagePinResponseError = (postApiAuthManagePinResponse400 | postApiAuthManagePinResponse404) & {
+  headers: Headers;
+};
+
+export type postApiAuthManagePinResponse = (postApiAuthManagePinResponseSuccess | postApiAuthManagePinResponseError)
+
+export const getPostApiAuthManagePinUrl = () => {
+
+
+
+
+  return `/api/auth/manage/pin`
+}
+
+export const postApiAuthManagePin = async (updatePinRequest: UpdatePinRequest, options?: Parameters<typeof customFetch>[1]): Promise<postApiAuthManagePinResponse> => {
+
+  return customFetch<postApiAuthManagePinResponse>(getPostApiAuthManagePinUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updatePinRequest)
+  }
+);}
+
+
+
+
+
+export const getPostApiAuthManagePinMutationOptions = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManagePin>>, TError,{data: UpdatePinRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManagePin>>, TError,{data: UpdatePinRequest}, TContext> => {
+
+const mutationKey = ['postApiAuthManagePin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthManagePin>>, {data: UpdatePinRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiAuthManagePin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiAuthManagePinMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAuthManagePin>>>
+    export type PostApiAuthManagePinMutationBody = UpdatePinRequest
+    export type PostApiAuthManagePinMutationError = HttpValidationProblemDetails | void
+
+    export const usePostApiAuthManagePin = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthManagePin>>, TError,{data: UpdatePinRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof postApiAuthManagePin>>,
+        TError,
+        {data: UpdatePinRequest},
+        TContext
+      > => {
+      return useMutation(getPostApiAuthManagePinMutationOptions(options), queryClient);
+    }
+
+export type getApiPluginsUiResponse200 = {
+  data: PluginUiManifestResponse[]
+  status: 200
+}
+
+export type getApiPluginsUiResponseSuccess = (getApiPluginsUiResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getApiPluginsUiResponse = (getApiPluginsUiResponseSuccess)
+
+export const getGetApiPluginsUiUrl = () => {
+
+
+
+
+  return `/api/plugins/ui`
+}
+
+export const getApiPluginsUi = async ( options?: Parameters<typeof customFetch>[1]): Promise<getApiPluginsUiResponse> => {
+
+  return customFetch<getApiPluginsUiResponse>(getGetApiPluginsUiUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetApiPluginsUiQueryKey = () => {
+    return [
+    'api','plugins','ui'
+    ] as const;
+    }
+
+
+export const getGetApiPluginsUiQueryOptions = <TData = Awaited<ReturnType<typeof getApiPluginsUi>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPluginsUi>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetApiPluginsUiQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiPluginsUi>>> = ({ signal }) => getApiPluginsUi({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiPluginsUi>>, TError, TData>
+}
+
+export type GetApiPluginsUiQueryResult = NonNullable<Awaited<ReturnType<typeof getApiPluginsUi>>>
+export type GetApiPluginsUiQueryError = unknown
+
+
+
+export function useGetApiPluginsUi<TData = Awaited<ReturnType<typeof getApiPluginsUi>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPluginsUi>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiPluginsUiQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+
+export type getApiPluginsEventsResponse200 = {
+  data: string
+  status: 200
+}
+
+export type getApiPluginsEventsResponseSuccess = (getApiPluginsEventsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getApiPluginsEventsResponse = (getApiPluginsEventsResponseSuccess)
+
+export const getGetApiPluginsEventsUrl = () => {
+
+
+
+
+  return `/api/plugins/events`
+}
+
+export const getApiPluginsEvents = async ( options?: Parameters<typeof customFetch>[1]): Promise<getApiPluginsEventsResponse> => {
+
+  return customFetch<getApiPluginsEventsResponse>(getGetApiPluginsEventsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetApiPluginsEventsQueryKey = () => {
+    return [
+    'api','plugins','events'
+    ] as const;
+    }
+
+
+export const getGetApiPluginsEventsQueryOptions = <TData = Awaited<ReturnType<typeof getApiPluginsEvents>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPluginsEvents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetApiPluginsEventsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiPluginsEvents>>> = ({ signal }) => getApiPluginsEvents({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiPluginsEvents>>, TError, TData>
+}
+
+export type GetApiPluginsEventsQueryResult = NonNullable<Awaited<ReturnType<typeof getApiPluginsEvents>>>
+export type GetApiPluginsEventsQueryError = unknown
+
+
+
+export function useGetApiPluginsEvents<TData = Awaited<ReturnType<typeof getApiPluginsEvents>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPluginsEvents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiPluginsEventsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
 
 export type postEamuseModelModuleMethodResponse200 = {
   data: void
@@ -1271,38 +1810,31 @@ export const getPostEamuseModelModuleMethodUrl = (model: string,
 
 export const postEamuseModelModuleMethod = async (model: string,
     module: string,
-    method: string, options?: RequestInit): Promise<postEamuseModelModuleMethodResponse> => {
+    method: string, options?: Parameters<typeof customFetch>[1]): Promise<postEamuseModelModuleMethodResponse> => {
 
-  const res = await fetch(getPostEamuseModelModuleMethodUrl(model,module,method),
+  return customFetch<postEamuseModelModuleMethodResponse>(getPostEamuseModelModuleMethodUrl(model,module,method),
   {
     ...options,
     method: 'POST'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postEamuseModelModuleMethodResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postEamuseModelModuleMethodResponse
-}
+);}
 
 
 
 
 
 export const getPostEamuseModelModuleMethodMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseModelModuleMethod>>, TError,{model: string;module: string;method: string}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseModelModuleMethod>>, TError,{model: string;module: string;method: string}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postEamuseModelModuleMethod>>, TError,{model: string;module: string;method: string}, TContext> => {
 
 const mutationKey = ['postEamuseModelModuleMethod'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -1310,7 +1842,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postEamuseModelModuleMethod>>, {model: string;module: string;method: string}> = (props) => {
           const {model,module,method} = props ?? {};
 
-          return  postEamuseModelModuleMethod(model,module,method,fetchOptions)
+          return  postEamuseModelModuleMethod(model,module,method,requestOptions)
         }
 
 
@@ -1325,7 +1857,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostEamuseModelModuleMethodMutationError = unknown
 
     export const usePostEamuseModelModuleMethod = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseModelModuleMethod>>, TError,{model: string;module: string;method: string}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseModelModuleMethod>>, TError,{model: string;module: string;method: string}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postEamuseModelModuleMethod>>,
         TError,
@@ -1364,38 +1896,31 @@ export const getPostEamuseMUrl = (m: string,
 }
 
 export const postEamuseM = async (m: string,
-    params: PostEamuseMParams, options?: RequestInit): Promise<postEamuseMResponse> => {
+    params: PostEamuseMParams, options?: Parameters<typeof customFetch>[1]): Promise<postEamuseMResponse> => {
 
-  const res = await fetch(getPostEamuseMUrl(m,params),
+  return customFetch<postEamuseMResponse>(getPostEamuseMUrl(m,params),
   {
     ...options,
     method: 'POST'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postEamuseMResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postEamuseMResponse
-}
+);}
 
 
 
 
 
 export const getPostEamuseMMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseM>>, TError,{m: string;params: PostEamuseMParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseM>>, TError,{m: string;params: PostEamuseMParams}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postEamuseM>>, TError,{m: string;params: PostEamuseMParams}, TContext> => {
 
 const mutationKey = ['postEamuseM'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -1403,7 +1928,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postEamuseM>>, {m: string;params: PostEamuseMParams}> = (props) => {
           const {m,params} = props ?? {};
 
-          return  postEamuseM(m,params,fetchOptions)
+          return  postEamuseM(m,params,requestOptions)
         }
 
 
@@ -1418,7 +1943,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostEamuseMMutationError = unknown
 
     export const usePostEamuseM = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseM>>, TError,{m: string;params: PostEamuseMParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuseM>>, TError,{m: string;params: PostEamuseMParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postEamuseM>>,
         TError,
@@ -1455,38 +1980,31 @@ export const getPostEamuseUrl = (params: PostEamuseParams,) => {
   return stringifiedParams.length > 0 ? `/eamuse?${stringifiedParams}` : `/eamuse`
 }
 
-export const postEamuse = async (params: PostEamuseParams, options?: RequestInit): Promise<postEamuseResponse> => {
+export const postEamuse = async (params: PostEamuseParams, options?: Parameters<typeof customFetch>[1]): Promise<postEamuseResponse> => {
 
-  const res = await fetch(getPostEamuseUrl(params),
+  return customFetch<postEamuseResponse>(getPostEamuseUrl(params),
   {
     ...options,
     method: 'POST'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postEamuseResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postEamuseResponse
-}
+);}
 
 
 
 
 
 export const getPostEamuseMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuse>>, TError,{params: PostEamuseParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuse>>, TError,{params: PostEamuseParams}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postEamuse>>, TError,{params: PostEamuseParams}, TContext> => {
 
 const mutationKey = ['postEamuse'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
 
 
@@ -1494,7 +2012,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postEamuse>>, {params: PostEamuseParams}> = (props) => {
           const {params} = props ?? {};
 
-          return  postEamuse(params,fetchOptions)
+          return  postEamuse(params,requestOptions)
         }
 
 
@@ -1509,7 +2027,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostEamuseMutationError = unknown
 
     export const usePostEamuse = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuse>>, TError,{params: PostEamuseParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postEamuse>>, TError,{params: PostEamuseParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof postEamuse>>,
         TError,

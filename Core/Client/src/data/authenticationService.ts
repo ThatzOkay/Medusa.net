@@ -5,7 +5,12 @@ import type { TokenResponse } from "@/types/tokenResponse";
 import { UserService } from "./userService";
 
 export class AuthenticationService {
-  
+  private static readonly loginErrorMessages: Record<string, string> = {
+    "Invalid login attempt.": "Incorrect username or password.",
+    "Failed": "Incorrect username or password.",
+    "LockedOut": "This account has been locked out due to too many failed attempts. Try again later.",
+  };
+
   static setAccessToken(accessToken: string): void {
     const store = useUserStore();
     store.setAccessToken(accessToken);
@@ -54,16 +59,21 @@ export class AuthenticationService {
     });
 
     if (!response.ok) {
-        const json = await response.json();
-      if (json.toString().includes(
-          "Invalid email or password",
-        )
-      ) {
+      const problem = await response.json().catch(() => null);
+      const detail = problem?.detail as string | undefined;
+
+      if (detail === "TwoFactorRequired") {
         return {
-          twoFactorRequired: false,
-          incorrectCredentials: true,
+          twoFactorRequired: true,
+          incorrectCredentials: false,
         };
       }
+
+      return {
+        twoFactorRequired: false,
+        incorrectCredentials: true,
+        errorMessage: (detail && this.loginErrorMessages[detail]) ?? "Incorrect username or password.",
+      };
     }
 
     const tokenResponse = (await response.json()) as TokenResponse;
@@ -87,6 +97,7 @@ export class AuthenticationService {
     return {
       twoFactorRequired: true,
       incorrectCredentials: true,
+      errorMessage: "Something went wrong while completing sign-in. Please try again.",
     };
   }
 

@@ -7,5 +7,5 @@
 
 export interface ValidateCardResponse {
   message: string;
-  success?: boolean;
+  success: boolean;
 }

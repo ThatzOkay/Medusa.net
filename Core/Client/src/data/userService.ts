@@ -19,7 +19,7 @@ export class UserService {
         const store = useUserStore();
         store.setUser(userClaims);
         store.setName(
-            userClaims.find((claim) => claim.type === "name")?.value || "",
+            userClaims.find((claim) => claim.type === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.value || "",
         );
         return true;
     }

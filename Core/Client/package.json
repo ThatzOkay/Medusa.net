@@ -10,7 +10,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "codegen": "cross-env graphql-codegen"
+    "codegen": "cross-env graphql-codegen",
+    "api-codegen": "orval"
   },
   "dependencies": {
     "@apollo/client": "^3.14.1",
@@ -24,6 +25,7 @@
     "axios": "^1.19.0",
     "graphql": "16.14.2",
     "pinia": "^4.0.2",
+    "qr-scanner": "^1.4.2",
     "tailwind-material-3": "^3.0.5",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",

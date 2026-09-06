@@ -16,6 +16,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   DateTime: { input: Date; output: Date; }
+  Long: { input: unknown; output: unknown; }
 };
 
 /** Defines when a policy shall be executed. */
@@ -43,21 +44,21 @@ export enum CacheControlScope {
 
 export type Card = {
   __typename?: 'Card';
-  id: Scalars['Int']['output'];
+  id: Scalars['Long']['output'];
   konamiId: Scalars['String']['output'];
   rawId: Scalars['String']['output'];
   user: User;
-  userId: Scalars['Int']['output'];
+  userId: Scalars['Long']['output'];
 };
 
 export type CardFilterInput = {
   and?: InputMaybe<Array<CardFilterInput>>;
-  id?: InputMaybe<IntOperationFilterInput>;
+  id?: InputMaybe<LongOperationFilterInput>;
   konamiId?: InputMaybe<StringOperationFilterInput>;
   or?: InputMaybe<Array<CardFilterInput>>;
   rawId?: InputMaybe<StringOperationFilterInput>;
   user?: InputMaybe<UserFilterInput>;
-  userId?: InputMaybe<IntOperationFilterInput>;
+  userId?: InputMaybe<LongOperationFilterInput>;
 };
 
 export type CardSortInput = {
@@ -103,6 +104,21 @@ export type ListFilterInputTypeOfCardFilterInput = {
   any?: InputMaybe<Scalars['Boolean']['input']>;
   none?: InputMaybe<CardFilterInput>;
   some?: InputMaybe<CardFilterInput>;
+};
+
+export type LongOperationFilterInput = {
+  eq?: InputMaybe<Scalars['Long']['input']>;
+  gt?: InputMaybe<Scalars['Long']['input']>;
+  gte?: InputMaybe<Scalars['Long']['input']>;
+  in?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
+  lt?: InputMaybe<Scalars['Long']['input']>;
+  lte?: InputMaybe<Scalars['Long']['input']>;
+  neq?: InputMaybe<Scalars['Long']['input']>;
+  ngt?: InputMaybe<Scalars['Long']['input']>;
+  ngte?: InputMaybe<Scalars['Long']['input']>;
+  nin?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
+  nlt?: InputMaybe<Scalars['Long']['input']>;
+  nlte?: InputMaybe<Scalars['Long']['input']>;
 };
 
 export type Mutation = {
@@ -153,6 +169,7 @@ export type PageInfo = {
 export type Query = {
   __typename?: 'Query';
   myCards?: Maybe<MyCardsConnection>;
+  publicUrl: Scalars['String']['output'];
 };
 
 
@@ -192,7 +209,7 @@ export type User = {
   concurrencyStamp?: Maybe<Scalars['String']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   emailConfirmed: Scalars['Boolean']['output'];
-  id: Scalars['Int']['output'];
+  id: Scalars['Long']['output'];
   lockoutEnabled: Scalars['Boolean']['output'];
   lockoutEnd?: Maybe<Scalars['DateTime']['output']>;
   normalizedEmail?: Maybe<Scalars['String']['output']>;
@@ -214,7 +231,7 @@ export type UserFilterInput = {
   concurrencyStamp?: InputMaybe<StringOperationFilterInput>;
   email?: InputMaybe<StringOperationFilterInput>;
   emailConfirmed?: InputMaybe<BooleanOperationFilterInput>;
-  id?: InputMaybe<IntOperationFilterInput>;
+  id?: InputMaybe<LongOperationFilterInput>;
   lockoutEnabled?: InputMaybe<BooleanOperationFilterInput>;
   lockoutEnd?: InputMaybe<DateTimeOperationFilterInput>;
   normalizedEmail?: InputMaybe<StringOperationFilterInput>;
@@ -257,6 +274,11 @@ export type AddCardMutationVariables = Exact<{
 
 export type AddCardMutation = { addCard: Array<{ konamiId: string, rawId: string }> };
 
+export type GetConfigQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetConfigQuery = { publicUrl: string };
+
 export type GetMyCardsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -293,6 +315,31 @@ export function useAddCardMutation(options: VueApolloComposable.UseMutationOptio
   return VueApolloComposable.useMutation<AddCardMutation, AddCardMutationVariables>(AddCardDocument, options);
 }
 export type AddCardMutationCompositionFunctionResult = VueApolloComposable.UseMutationReturn<AddCardMutation, AddCardMutationVariables>;
+export const GetConfigDocument = gql`
+    query GetConfig {
+  publicUrl
+}
+    `;
+
+/**
+ * __useGetConfigQuery__
+ *
+ * To run a query within a Vue component, call `useGetConfigQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetConfigQuery` returns an object from Apollo Client that contains result, loading and error properties
+ * you can use to render your UI.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/query.html#options;
+ *
+ * @example
+ * const { result, loading, error } = useGetConfigQuery();
+ */
+export function useGetConfigQuery(options: VueApolloComposable.UseQueryOptions<GetConfigQuery, GetConfigQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<GetConfigQuery, GetConfigQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<GetConfigQuery, GetConfigQueryVariables>> = {}) {
+  return VueApolloComposable.useQuery<GetConfigQuery, GetConfigQueryVariables>(GetConfigDocument, {}, options);
+}
+export function useGetConfigLazyQuery(options: VueApolloComposable.UseQueryOptions<GetConfigQuery, GetConfigQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<GetConfigQuery, GetConfigQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<GetConfigQuery, GetConfigQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<GetConfigQuery, GetConfigQueryVariables>(GetConfigDocument, {}, options);
+}
+export type GetConfigQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<GetConfigQuery, GetConfigQueryVariables>;
 export const GetMyCardsDocument = gql`
     query GetMyCards {
   myCards {

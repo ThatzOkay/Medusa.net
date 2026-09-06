@@ -45,6 +45,20 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/auth/forgotPassword/': RouteRecordInfo<
+      '/auth/forgotPassword/',
+      '/auth/forgotPassword',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/auth/forgotPassword/confirmation': RouteRecordInfo<
+      '/auth/forgotPassword/confirmation',
+      '/auth/forgotPassword/confirmation',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/auth/register': RouteRecordInfo<
       '/auth/register',
       '/auth/register',
@@ -52,9 +66,44 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/auth/resetPassword/': RouteRecordInfo<
+      '/auth/resetPassword/',
+      '/auth/resetPassword',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/auth/resetPassword/confirmation': RouteRecordInfo<
+      '/auth/resetPassword/confirmation',
+      '/auth/resetPassword/confirmation',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/cardless/[token]': RouteRecordInfo<
+      '/cardless/[token]',
+      '/cardless/:token',
+      { token: ParamValue<true> },
+      { token: ParamValue<false> },
+      | never
+    >,
+    '/cardless/scan': RouteRecordInfo<
+      '/cardless/scan',
+      '/cardless/scan',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/cards/': RouteRecordInfo<
       '/cards/',
       '/cards',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/settings/': RouteRecordInfo<
+      '/settings/',
+      '/settings',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -88,6 +137,22 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/auth/forgotPassword/index.vue': {
+      routes:
+        | '/auth/forgotPassword/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/auth/forgotPassword/confirmation.vue': {
+      routes:
+        | '/auth/forgotPassword/confirmation'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/auth/register.vue': {
       routes:
         | '/auth/register'
@@ -96,9 +161,49 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/auth/resetPassword/index.vue': {
+      routes:
+        | '/auth/resetPassword/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/auth/resetPassword/confirmation.vue': {
+      routes:
+        | '/auth/resetPassword/confirmation'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/cardless/[token].vue': {
+      routes:
+        | '/cardless/[token]'
+      views:
+        | never
+      pathParamNames:
+        | 'token'
+    }
+    'src/pages/cardless/scan.vue': {
+      routes:
+        | '/cardless/scan'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/cards/index.vue': {
       routes:
         | '/cards/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/settings/index.vue': {
+      routes:
+        | '/settings/'
       views:
         | never
       pathParamNames:

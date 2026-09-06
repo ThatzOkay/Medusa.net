@@ -8,6 +8,12 @@ export default defineConfig({
             target: './src/data/apiClient.ts',
             schemas: './src/types/api',
             client: 'vue-query',
+            override: {
+                mutator: {
+                    path: './src/data/customFetch.ts',
+                    name: 'customFetch',
+                },
+            },
         }
     }
 });
