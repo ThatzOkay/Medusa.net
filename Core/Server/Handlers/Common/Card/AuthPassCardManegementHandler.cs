@@ -20,7 +20,19 @@ public class AuthPassCardManegementHandler(ICardService cardService) : Handler<A
         var status = 0;
 
         var id = req.ReferenceId.TrimStart();
-        var card = await cardService.FindById(long.Parse(id)!);
+
+        var parsed = long.TryParse(id, out var parsedId);
+
+        Abstractions.Entities.Card? card;
+
+        if (!parsed)
+        {
+            card = await cardService.FindByKonamiId(req.ReferenceId);
+        }
+        else
+        {
+            card = await cardService.FindById(parsedId);
+        }
 
         if (card is null)
         {
@@ -36,7 +48,7 @@ public class AuthPassCardManegementHandler(ICardService cardService) : Handler<A
         {
             Status = status
         };
-        
+
         return authPass;
     }
 }

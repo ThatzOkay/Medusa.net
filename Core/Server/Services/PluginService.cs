@@ -101,7 +101,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry, Plugin
         logger.LogInformation("Plugin '{name}' v{version} hot-reloaded successfully (gameCode={gameCode}, {verRange})",
             newSlot.Plugin.Name, newSlot.Plugin.Version,
             newSlot.Plugin.GameCode, VerRange(newSlot.Plugin.MinVer, newSlot.Plugin.MaxVer));
-        
+
         if (newSlot.Plugin.UiManifest is not null)
             uiEventBroadcaster.Broadcast(
                 new PluginUiEvent("reloaded", PluginsApi.DerivePluginUiId(newSlot.Plugin)));
@@ -134,7 +134,7 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry, Plugin
             logger.LogInformation(
                 "Plugin '{name}' (gameCode={gameCode}, {verRange}) unloaded because '{path}' was deleted",
                 slot.Plugin.Name, slot.Plugin.GameCode, VerRange(slot.Plugin.MinVer, slot.Plugin.MaxVer), deletedPath);
-            
+
             if (slot.Plugin.UiManifest is not null)
                 uiEventBroadcaster.Broadcast(
                     new PluginUiEvent("unloaded", PluginsApi.DerivePluginUiId(slot.Plugin)));
@@ -196,9 +196,15 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry, Plugin
 
     // ── Internal ─────────────────────────────────────────────────────────────
 
-    // A plugin folder now ships every package dependency alongside the plugin's own dll
-    // (AssetsTools.NET.dll, EFCore, etc.), so which file actually declares IMedusaPlugin
-    // isn't known up front - try each dll in the directory until one of them does.
+    // Dependencies ship alongside the plugin DLL, so we don't know which file hosts
+    // IMedusaPlugin until we look. Loading each candidate for real would mean ~10
+    // wasted PluginLoadContext cycles per plugin, and AssemblyLoadContext.Unload()
+    // is asynchronous (needs GC) — a scanned dependency can still be resident when
+    // the real plugin later loads and needs that same assembly, causing type-identity
+    // collisions even on cold boot. MetadataLoadContext reads metadata without
+    // executing code; Dispose() is immediate and leaves no stale state. Note that
+    // types returned from it are not runtime types, so match IMedusaPlugin by
+    // full name rather than direct interface comparison.
     private PluginSlot? TryLoadSlotFromDirectory(string dir)
     {
         var dlls = Directory.EnumerateFiles(dir, "*.dll").ToArray();
@@ -208,16 +214,55 @@ public class PluginService(ILogger logger, PluginRegistry pluginRegistry, Plugin
             return null;
         }
 
+        var pluginDll = FindPluginDllByMetadata(dir, dlls);
+        if (pluginDll is null)
+        {
+            logger.LogWarning("No medusa plugin found among {count} dll(s) in '{dir}'", dlls.Length, Path.GetFileName(dir));
+            return null;
+        }
+
+        return TryLoadSlot(pluginDll);
+    }
+
+    private string? FindPluginDllByMetadata(string dir, string[] dlls)
+    {
+        var pluginInterfaceName = typeof(IMedusaPlugin).FullName;
+
+        // Precedence for name -> path when the same simple assembly name shows up more than
+        // once: the plugin's own bundled copy first, falling back to the host's base
+        // directory (Abstractions.dll normally isn't bundled at all - PluginLoadContext
+        // resolves it to the host by design), then the runtime's own reference assemblies.
+        var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in Directory.EnumerateFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!, "*.dll"))
+            byName.TryAdd(Path.GetFileNameWithoutExtension(path), path);
+        foreach (var path in Directory.EnumerateFiles(AppContext.BaseDirectory, "*.dll"))
+            byName[Path.GetFileNameWithoutExtension(path)] = path;
+        foreach (var path in dlls)
+            byName[Path.GetFileNameWithoutExtension(path)] = path;
+
+        using var mlc = new MetadataLoadContext(new PathAssemblyResolver(byName.Values));
+
         foreach (var dllFile in dlls)
         {
             if (dllFile.Contains("Abstractions.dll"))
                 continue;
 
-            var slot = TryLoadSlot(dllFile);
-            if (slot is not null) return slot;
+            try
+            {
+                var assembly = mlc.LoadFromAssemblyPath(dllFile);
+                var hasPlugin = assembly.GetTypes()
+                    .Any(t => t.GetInterfaces().Any(i => i.FullName == pluginInterfaceName));
+
+                if (hasPlugin) return dllFile;
+            }
+            catch (Exception ex) when (ex is BadImageFormatException or ReflectionTypeLoadException or FileNotFoundException)
+            {
+                // Not a .NET assembly, or its own dependencies didn't resolve for metadata
+                // purposes - neither means it's our plugin, so just move on to the next dll.
+                logger.LogDebug(ex, "Skipping '{file}' while scanning for the plugin dll", Path.GetFileName(dllFile));
+            }
         }
 
-        logger.LogWarning("No medusa plugin found among {count} dll(s) in '{dir}'", dlls.Length, Path.GetFileName(dir));
         return null;
     }
 
