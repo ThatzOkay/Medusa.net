@@ -45,17 +45,10 @@ public static class CardlessApi
             return TypedResults.BadRequest(new ApproveSessionResponse { Success = false, Message = "No card registered on this account yet." });
         }
 
-        // `cardType` has no value confirmed directly from sppass itself -
-        // decompiling SOUND VOLTEX's sppass module only shows the client
-        // requiring it be non-empty and parse as base-10, never comparing it
-        // against a real value. "4" is borrowed from KAMUNITY.AvsTypes.CardType
-        // (MCARD=0, ICCARD=1, FELICA=2, VIRTUAL=4), KONAMI's shared platform
-        // card-type enum used identically by two other arcade titles' decompiled
-        // C# (Polaris Chord, Chase Chase Jokers) - VIRTUAL is the platform's own
-        // name for "no physical card," an exact semantic match for cardless
-        // login. Not proven that sppass reuses this enum, so if the cabinet
-        // rejects it, that's the first assumption to revisit.
-        var approved = sessionService.TryApprove(token, "4", card.RawId);
+        // Confirmed against decompiled Assembly-CSharp: CardEntryScene casts
+        // sppass.lookup's card_type straight into (MCARD=0,
+        // ICCARD=1, FELICA=2, VIRTUAL=4, CARDLESS=5) and sets Account.IsCardless=true
+        var approved = sessionService.TryApprove(token, "5", card.RawId);
 
         if (!approved)
         {

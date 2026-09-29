@@ -195,6 +195,15 @@ eamuseGroup.MapPost("/", ([FromQuery] string model, [FromQuery] string? module, 
     return HandleEAmuseRoute(amusementRequest, httpContext, logger, handlerService, pluginService);
 });
 
+eamuseGroup.MapGet("/{module}/{model}/{module2}/{method}", (string module, string model, string module2, string method,
+    HttpContext httpContext, [FromServices] ILogger<Program> logger, [FromServices] IHandlerService handlerService,
+    [FromServices] IPluginService pluginService) =>
+{
+    var amusementRequest = new AmusementRequest() { Model = model, Module = module ?? "", Method = method ?? "" };
+
+    return HandleEAmuseRoute(amusementRequest, httpContext, logger, handlerService, pluginService);
+});
+
 var graphqlMap = app.MapGraphQL();
 
 app.MapFallbackToFile("/index.html");
@@ -230,11 +239,10 @@ async Task<IResult> HandleEAmuseRoute(AmusementRequest amusementRequest, HttpCon
     Console.WriteLine(httpContext.Request.Headers.UserAgent);
     // Enable buffering to allow multiple reads of the request body
     httpContext.Request.EnableBuffering();
-    var body = "";
     // The body is 932 encoded xml
-    if (httpContext.Request.Body.Length != 0)
+    string body;
+    using (var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true))
     {
-        using var reader = new StreamReader(httpContext.Request.Body, Encoding.GetEncoding(932), false, 1024, true);
         body = await reader.ReadToEndAsync();
     }
 

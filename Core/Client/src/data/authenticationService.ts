@@ -40,11 +40,7 @@ export class AuthenticationService {
     store.setRefreshToken(tokenResponse.refreshToken);
     store.setLoggedIn(true);
 
-    if (await UserService.GetUserClaims()) {
-      return true;
-    }
-
-    return false;
+    return await UserService.GetUserClaims();
   }
 
   static async login(

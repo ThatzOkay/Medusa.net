@@ -32,12 +32,12 @@ namespace Server.Handlers.Boot
                 Mode = "operation",
                 Status = 0
             };
-            
+
             var coreServices = new string[]{
         "cardmng", "facility", "message", "numbering", "package", "pcbevent", "pcbtracker", "pkglist",
         "posevent", "userdata", "userid", "eacoin", "dlstatus", "netlog", "info", "reference", "sidmgr",
         "local", "local2", "lobby", "slocal", "slocal2", "sglocal", "sglocal2", "lab", "globby",
-        "slobby", "sglobby", "eacharge"
+        "slobby", "sglobby", "eacharge", "sppass"
     };
 
             foreach(var service in coreServices)
@@ -48,7 +48,7 @@ namespace Server.Handlers.Boot
                     Url = $"{CommonUrl}/{service}"
                 });
             }
-            
+
             services.Items.Add(new ServiceItem()
             {
                 Name = "ntp",
@@ -60,7 +60,7 @@ namespace Server.Handlers.Boot
                 Name = "keepalive",
                 Url = "http://127.0.0.1:8083/keepalive?pa=127.0.0.1&ia=127.0.0.1&ga=127.0.0.1&ma=127.0.0.1&t1=2&t2=10"
             });
-            
+
             return services;
         }
 

@@ -16,13 +16,22 @@ public class BodyParsingMiddleware(RequestDelegate next)
 
     public async Task Invoke(HttpContext context)
     {
-        if(context.Request.Method == "GET" || !context.Request.Path.ToString().Contains("eamuse", StringComparison.CurrentCultureIgnoreCase))
+        var method = context.Request.Method;
+        var path = context.Request.Path.ToString();
+
+        if (!(
+                (method == "GET" && path.Contains("sppass", StringComparison.InvariantCultureIgnoreCase)) ||
+                (method == "POST" && path.Contains("eamuse", StringComparison.InvariantCultureIgnoreCase))
+            ))
         {
             await _next(context);
             return;
         }
 
-        var body = await ParseRequest(context);
+        var token = context.Request.Query["token"].ToString();
+        var body = method == "GET" && !string.IsNullOrEmpty(token)
+            ? new XDocument(new XElement("call", new XElement("sppass", new XAttribute("token", token))))
+            : await ParseRequest(context);
 
         context.Items["Encoding"] = body.Declaration?.Encoding;
         var bodyString = body.ToString();
@@ -41,10 +50,10 @@ public class BodyParsingMiddleware(RequestDelegate next)
     {
         var isCompressed = context.Request.Headers["X-Compress"].ToString().Contains("lz77");
         var info = context.Request.Headers["X-Eamuse-Info"].FirstOrDefault();
-        var contentLength = context.Request.Headers.ContentLength ?? 0;
-        var data = new byte[(int)contentLength];
 
-        await context.Request.Body.ReadExactlyAsync(data.AsMemory(0, (int)contentLength));
+        using var bodyStream = new MemoryStream();
+        await context.Request.Body.CopyToAsync(bodyStream);
+        var data = bodyStream.ToArray();
 
         if(info is not null)
         {
@@ -73,7 +82,7 @@ public class BodyParsingMiddleware(RequestDelegate next)
         }
         catch(Exception e)
         {
-            //Console.WriteLine(e); 
+            //Console.WriteLine(e);
             var testData = Encoding.ASCII.GetString(data);
 
             if (!string.IsNullOrEmpty(testData))
@@ -83,7 +92,6 @@ public class BodyParsingMiddleware(RequestDelegate next)
                 context.Request.Headers.Append("IsEncoded", "false");
             }
         }
-        //Data is now xml in konami binary form
         return returnData;
     }
 
