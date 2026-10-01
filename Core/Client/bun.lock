@@ -16,6 +16,7 @@
         "axios": "^1.19.0",
         "classnames": "^2.5.1",
         "graphql": "16.14.2",
+        "medusa-plugin-types": "file:../../Abstractions/Client",
         "pinia": "^4.0.2",
         "qr-scanner": "^1.4.2",
         "tailwind-material-3": "^3.0.5",
@@ -957,6 +958,8 @@
     "math-intrinsics": ["math-intrinsics@1.1.0", "", {}, "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="],
 
     "mdurl": ["mdurl@2.1.0", "", {}, "sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg=="],
+
+    "medusa-plugin-types": ["medusa-plugin-types@file:../../Abstractions/Client", { "peerDependencies": { "vue": ">=3.0.0" } }],
 
     "memorystream": ["memorystream@0.3.1", "", {}, "sha512-S3UwM3yj5mtUSEfP41UZmt/0SCoVYUcU1rkXv+BQ5Ig8ndL4sPoJNBUJERafdPb5jjHJGuMgytgKvKIf58XNBw=="],
 

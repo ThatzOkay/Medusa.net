@@ -14,6 +14,7 @@
     "api-codegen": "orval"
   },
   "dependencies": {
+    "medusa-plugin-types": "file:../../Abstractions/Client",
     "@apollo/client": "^3.14.1",
     "@iconify/vue": "^5.0.1",
     "@material/material-color-utilities": "^0.4.0",
