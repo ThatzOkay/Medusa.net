@@ -1,4 +1,5 @@
 using System.Xml.Serialization;
+using Abstractions.SerializationTypes;
 
 namespace Server.Models.Response;
 
@@ -8,15 +9,15 @@ public class SppassOpenResponse
     [XmlAttribute("status")]
     public required int Status { get; set; }
 
-    [XmlAttribute("token")]
-    public required string Token { get; set; }
+    [XmlElement("token")]
+    public required XrpcString Token { get; set; }
 
-    [XmlAttribute("expire_datetime")]
-    public required string ExpireDatetime { get; set; }
+    [XmlElement("expire_datetime")]
+    public required XrpcString ExpireDatetime { get; set; }
 
-    [XmlAttribute("url")]
-    public required string Url { get; set; }
+    [XmlElement("url")]
+    public required XrpcString Url { get; set; }
 
-    [XmlAttribute("interval")]
-    public required int Interval { get; set; }
+    [XmlElement("interval")]
+    public required XrpcInt Interval { get; set; }
 }

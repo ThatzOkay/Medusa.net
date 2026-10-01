@@ -1,4 +1,5 @@
 using System.Xml.Serialization;
+using Abstractions.SerializationTypes;
 
 namespace Server.Models.Response;
 
@@ -8,15 +9,15 @@ public class SppassLookupResponse
     [XmlAttribute("status")]
     public required int Status { get; set; }
 
-    [XmlAttribute("url")]
-    public required string Url { get; set; }
+    [XmlElement("url")]
+    public required XrpcString Url { get; set; }
 
-    [XmlAttribute("interval")]
-    public required int Interval { get; set; }
+    [XmlElement("interval")]
+    public required XrpcInt Interval { get; set; }
 
-    [XmlAttribute("card_type")]
-    public string CardType { get; set; } = "";
+    [XmlElement("card_type")]
+    public XrpcString CardType { get; set; } = "";
 
-    [XmlAttribute("card_id")]
-    public string CardId { get; set; } = "";
+    [XmlElement("card_id")]
+    public XrpcString CardId { get; set; } = "";
 }
