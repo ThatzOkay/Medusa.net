@@ -107,6 +107,8 @@ await pluginService.DiscoverPluginsAsync(builder);
 builder.Services.AddTransient<ICardService, CardService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddSingleton<IXmlLogService, XmlLogService>();
+builder.Services.AddSingleton<IPackageService, PackageService>();
+builder.Services.AddSingleton<MedusaBaseUrl>();
 
 var app = builder.Build();
 
@@ -121,11 +123,19 @@ app.Lifetime.ApplicationStarted.Register(() =>
     var localIp = IpUtils.GetLocalIPv4();
 
     if (serverAddresses == null || localIp == null) return;
+
+    var baseUrlHolder = app.Services.GetRequiredService<MedusaBaseUrl>();
+
     foreach (var address in serverAddresses.Addresses)
     {
         var uri = new Uri(address);
         var displayAddress = Environment.GetEnvironmentVariable("MAIN_ADDRESS") ??
                              $"{uri.Scheme}://{localIp}:{uri.Port}";
+
+        // Store the first address as the base URL used in package download links
+        if (string.IsNullOrEmpty(baseUrlHolder.Value))
+            baseUrlHolder.Value = displayAddress;
+
         Console.WriteLine($"Accessible at: {displayAddress}");
         Console.WriteLine($"EAmuse accessible at: {displayAddress}/eamuse");
     }
@@ -207,6 +217,20 @@ eamuseGroup.MapGet("/{module}/{model}/{module2}/{method}", (string module, strin
 var graphqlMap = app.MapGraphQL();
 
 app.MapFallbackToFile("/index.html");
+
+// Package file download endpoint — serves QAR/binary files for the OTA updater
+app.MapGet("/packages/{gameCode}/{filename}", (
+    string gameCode, string filename,
+    [FromServices] IPackageService packageService) =>
+{
+    var result = packageService.GetPackageFile(gameCode, filename);
+    if (result is null) return Results.NotFound();
+
+    var (fileInfo, _) = result.Value;
+    var stream = fileInfo.OpenRead();
+    return Results.Stream(stream, "application/octet-stream", fileInfo.Name,
+        enableRangeProcessing: true);
+});
 
 
 await using var scope = app.Services.CreateAsyncScope();
