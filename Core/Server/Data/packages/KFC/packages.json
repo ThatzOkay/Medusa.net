@@ -1,0 +1,65 @@
+{
+  "gameCode": "KFC",
+  "packages": [
+    {
+      "name": "KFC-2026082500-to-2026090100",
+      "desc": "Sound Voltex patch 2026-08-25 \u2192 2026-09-01",
+      "pkgType": "all",
+      "filename": "KFC-2026082500-to-2026090100.qar",
+      "sumType": "md5",
+      "sum": "5ce778e9980580455d226c74473d4064",
+      "from": 2026082500,
+      "till": 2026090100
+    },
+    {
+      "name": "KFC-2026090100-bcast",
+      "desc": "Sound Voltex binary-cast manifest 2026-09-01",
+      "pkgType": "binary-cast",
+      "filename": "KFC-2026090100-bcast.qar",
+      "sumType": "md5",
+      "sum": "c5b2977e6f0f9c44145e2f343a375758",
+      "from": 2026082500,
+      "till": 2026090100
+    },
+    {
+      "name": "KFC-2026071400-to-2026080500",
+      "desc": "Sound Voltex patch 2026-07-14 \u2192 2026-08-05",
+      "pkgType": "all",
+      "filename": "KFC-2026080500.qar",
+      "sumType": "md5",
+      "sum": "d192d6dac63cf07a7006263c0262a042",
+      "from": 2026071400,
+      "till": 2026080500
+    },
+    {
+      "name": "KFC-2026080500-bcast",
+      "desc": "Sound Voltex binary-cast manifest 2026-08-05",
+      "pkgType": "binary-cast",
+      "filename": "KFC-2026080500-bcast.qar",
+      "sumType": "md5",
+      "sum": "1bc729bcd6658af1bb2b3a069cd9b8df",
+      "from": 2026071400,
+      "till": 2026080500
+    },
+    {
+      "name": "KFC-2026080500-to-2026082500",
+      "desc": "Sound Voltex patch 2026-08-05 \u2192 2026-08-25",
+      "pkgType": "all",
+      "filename": "KFC-2026080500-to-2026082500.qar",
+      "sumType": "md5",
+      "sum": "c3671d0cc7bb776ed09400bdde4c727e",
+      "from": 2026080500,
+      "till": 2026082500
+    },
+    {
+      "name": "KFC-2026082500-bcast",
+      "desc": "Sound Voltex binary-cast manifest 2026-08-25",
+      "pkgType": "binary-cast",
+      "filename": "KFC-2026082500-bcast.qar",
+      "sumType": "md5",
+      "sum": "69b403979e08d29745f0103af2e930bb",
+      "from": 2026080500,
+      "till": 2026082500
+    }
+  ]
+}

@@ -232,6 +232,12 @@ PublishScripts/
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
+# except Medusa's per-game package config files (not the large binary QAR/bcast files)
+!Core/Server/Data/[Pp]ackages/
+!Core/Server/Data/[Pp]ackages/*/
+!Core/Server/Data/[Pp]ackages/*/packages.json
+# keep binary package files (QAR, etc.) out of source control — they're operator-managed
+Core/Server/Data/[Pp]ackages/*/files/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
