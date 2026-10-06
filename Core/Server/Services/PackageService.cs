@@ -77,7 +77,7 @@ public sealed class PackageService : IPackageService, IDisposable
                 Name    = pkg.Name,
                 Desc    = pkg.Desc,
                 Size    = new FileInfo(filePath).Length,
-                PkgType = pkg.PkgType,
+                PkgType = "auto",
                 SumType = pkg.SumType,
                 Sum     = pkg.Sum,
                 From    = pkg.From,
