@@ -16,6 +16,7 @@ const sidebarOpen = ref(false);
             >
                 <Icon icon="material-symbols:menu-rounded" class="w-6 h-6" />
             </button>
+            <img src="/medusa-icon.svg" alt="" class="w-8 h-8 shrink-0" />
             <span class="text-md-title-large text-md-on-surface">Medusa.net</span>
         </header>
 
