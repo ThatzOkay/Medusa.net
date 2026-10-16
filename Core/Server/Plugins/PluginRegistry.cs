@@ -18,13 +18,13 @@ public sealed class PluginRegistry
         ImmutableInterlocked.TryRemove(ref _slots, key, out _);
         return old;
     }
-    
+
     public PluginSlot? GetSlot(PluginSlotKey key)
     {
         _slots.TryGetValue(key, out var slot);
         return slot;
     }
-    
+
     public IEnumerable<PluginSlot> GetSlots() => _slots.Values;
     public IEnumerable<IMedusaPlugin> GetPlugins() => _slots.Values.Select(s => s.Plugin);
 }

@@ -12,10 +12,10 @@ public class EaCoinConsumeResponse
 
     [XmlElement("acstatus")]
     public XrpcUByte AcStatus { get; set; }
-    
+
     [XmlElement("autocharge")]
     public XrpcUByte AutoCharge { get; set; }
-    
+
     [XmlElement("balance")]
     public XrpcInt Balance { get; set; }
 }

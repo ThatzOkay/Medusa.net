@@ -19,10 +19,10 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
     public override async Task<GetRefIdResponse> HandleAsync(GetRefIdRequest req, GameModel model)
     {
         var konamiId = cardService.ConvertUidToKonamiId(req.CardId);
-        
+
         var card = new Abstractions.Entities.Card { RawId = req.CardId, KonamiId = konamiId };
         var user = new User { Pin = req.Password, UserName = konamiId, Cards = [card] };
-        
+
         await userManager.CreateAsync(user);
 
         var getRefId = new GetRefIdResponse()
@@ -31,7 +31,7 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
             DataId = card.RawId,
             ReferenceId = card.Id.ToString().PadLeft(16, '0')
         };
-        
+
         return getRefId;
     }
 }

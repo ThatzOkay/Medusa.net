@@ -58,7 +58,7 @@ public static class PluginsApi
         if (pluginDir is null) return Results.NotFound();
 
         var uiDistDir = Path.GetFullPath(Path.Combine(pluginDir, "ui", "dist"));
-        var safeFile  = Path.GetFullPath(Path.Combine(uiDistDir, filePath));
+        var safeFile = Path.GetFullPath(Path.Combine(uiDistDir, filePath));
 
         // Path-traversal guard — never escape ui/dist/
         if (!safeFile.StartsWith(uiDistDir, StringComparison.OrdinalIgnoreCase))
@@ -68,10 +68,10 @@ public static class PluginsApi
 
         var contentType = Path.GetExtension(safeFile) switch
         {
-            ".js"  => "application/javascript",
+            ".js" => "application/javascript",
             ".css" => "text/css",
             ".map" => "application/json",
-            _      => "application/octet-stream"
+            _ => "application/octet-stream"
         };
 
         return Results.File(safeFile, contentType);
@@ -98,9 +98,9 @@ public static class PluginsApi
 
         foreach (var s in registry.GetSlots().Where(s => s.Plugin.UiManifest is not null))
         {
-            var manifest   = s.Plugin.UiManifest!;
+            var manifest = s.Plugin.UiManifest!;
             var pluginUiId = DerivePluginUiId(s.Plugin);
-            var pluginDir  = Path.GetDirectoryName(s.Context.AssemblyPath) ?? "";
+            var pluginDir = Path.GetDirectoryName(s.Context.AssemblyPath) ?? "";
 
             if (!manifest.ShowWhenNoProfile && userCardIds.Count > 0)
             {
@@ -115,7 +115,7 @@ public static class PluginsApi
             }
 
             var bundleFile = Path.Combine(pluginDir, "ui", "dist", "plugin.js");
-            var sriFile    = Path.Combine(pluginDir, "ui", "dist", "plugin.js.sri");
+            var sriFile = Path.Combine(pluginDir, "ui", "dist", "plugin.js.sri");
 
             var timestamp = File.Exists(bundleFile)
                 ? new DateTimeOffset(File.GetLastWriteTimeUtc(bundleFile)).ToUnixTimeSeconds()
@@ -126,13 +126,13 @@ public static class PluginsApi
                 : null;
 
             results.Add(new PluginUiManifestResponse(
-                PluginId:    pluginUiId,
+                PluginId: pluginUiId,
                 DisplayName: manifest.DisplayName,
-                Icon:        manifest.Icon,
-                BundleUrl:   $"/pluginAssets/{pluginUiId}/plugin.js?t={timestamp}",
-                Sri:         sri,
-                NavItems:    manifest.NavItems,
-                Routes:      manifest.Routes));
+                Icon: manifest.Icon,
+                BundleUrl: $"/pluginAssets/{pluginUiId}/plugin.js?t={timestamp}",
+                Sri: sri,
+                NavItems: manifest.NavItems,
+                Routes: manifest.Routes));
         }
 
         return Results.Ok(results);
@@ -148,9 +148,9 @@ public static class PluginsApi
         HttpContext ctx,
         CancellationToken ct)
     {
-        ctx.Response.Headers.ContentType          = "text/event-stream";
-        ctx.Response.Headers.CacheControl         = "no-cache";
-        ctx.Response.Headers.Connection           = "keep-alive";
+        ctx.Response.Headers.ContentType = "text/event-stream";
+        ctx.Response.Headers.CacheControl = "no-cache";
+        ctx.Response.Headers.Connection = "keep-alive";
         ctx.Response.Headers["X-Accel-Buffering"] = "no";
 
         var (connectionId, channel) = broadcaster.Subscribe();

@@ -11,7 +11,7 @@ public static class RequestExecutorBuilderExtensions
         {
             var extensionNamespace = type.Namespace;
 
-            return extensionNamespace is null ? 
+            return extensionNamespace is null ?
                 builder : builder.AddTypeExtensionsInNamespace(extensionNamespace);
         }
 
@@ -20,7 +20,7 @@ public static class RequestExecutorBuilderExtensions
             var type = typeof(T);
             var extensionNamespace = type.Namespace;
 
-            return extensionNamespace is null ? 
+            return extensionNamespace is null ?
                 builder : builder.AddTypeExtensionsInNamespace(extensionNamespace);
         }
 
@@ -29,14 +29,14 @@ public static class RequestExecutorBuilderExtensions
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
             var foundAssembly = assemblies.FirstOrDefault(x => x.DefinedTypes.Any(typeInfo => typeInfo.Namespace?.Equals(extensionNamespace) ?? false));
-            if(foundAssembly is null)
+            if (foundAssembly is null)
             {
                 try
                 {
                     var loaded = Assembly.Load(extensionNamespace.Split('.')[0]);
                     foundAssembly = loaded;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     return builder;
                 }
@@ -49,8 +49,8 @@ public static class RequestExecutorBuilderExtensions
                     (typeInfo.Namespace?.Equals(extensionNamespace) ?? false) &&
                     typeInfo.GetCustomAttributes().Any(x => x.GetType() == attributeType))
                 .ToArray();
-            
-            foreach(var type in foundTypes)
+
+            foreach (var type in foundTypes)
             {
                 var customAttributes = type.GetCustomAttributes();
                 if (customAttributes.Any(x => x.GetType() == attributeType))

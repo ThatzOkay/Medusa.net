@@ -7,7 +7,7 @@ public class GetRefIdRequest
 {
     [XmlAttribute("cardid")]
     public required string CardId { get; set; }
-    
+
     [XmlAttribute("passwd")]
-    public required string  Password { get; set; }
+    public required string Password { get; set; }
 }

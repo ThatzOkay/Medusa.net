@@ -35,7 +35,7 @@ public class BodyParsingMiddleware(RequestDelegate next)
 
         context.Items["Encoding"] = body.Declaration?.Encoding;
         var bodyString = body.ToString();
-        if(string.IsNullOrEmpty(bodyString))
+        if (string.IsNullOrEmpty(bodyString))
         {
             context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(""));
             await _next(context);
@@ -55,11 +55,11 @@ public class BodyParsingMiddleware(RequestDelegate next)
         await context.Request.Body.CopyToAsync(bodyStream);
         var data = bodyStream.ToArray();
 
-        if(info is not null)
+        if (info is not null)
         {
             var infoParts = info.Split('-');
 
-            for(var i = 0; i < 6; i++)
+            for (var i = 0; i < 6; i++)
             {
                 Key[i] = Convert.ToByte((infoParts[1] + infoParts[2]).Substring(i << 1, 2), 0x10);
             }
@@ -68,7 +68,7 @@ public class BodyParsingMiddleware(RequestDelegate next)
             data = RC4.Decrypt(rc4Key, data);
         }
 
-        if(isCompressed)
+        if (isCompressed)
         {
             data = LZ77.Decompress(data);
         }
@@ -80,7 +80,7 @@ public class BodyParsingMiddleware(RequestDelegate next)
             returnData = KbinConverter.ReadXmlLinq(data);
             context.Request.Headers.Append("IsEncoded", "true");
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             //Console.WriteLine(e);
             var testData = Encoding.ASCII.GetString(data);

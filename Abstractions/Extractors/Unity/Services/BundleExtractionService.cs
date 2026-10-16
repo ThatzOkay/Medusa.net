@@ -46,8 +46,8 @@ public sealed class BundleExtractionService
         ];
 
         foreach (var extractor in extractors)
-        foreach (var type in extractor.HandledTypes)
-            _extractorsByType[type] = extractor;
+            foreach (var type in extractor.HandledTypes)
+                _extractorsByType[type] = extractor;
     }
 
     public async Task<ExtractionLog> ExtractBundleAsync(

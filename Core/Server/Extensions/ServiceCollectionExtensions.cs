@@ -35,9 +35,9 @@ namespace Server.Extensions
                 .Where(x => typeof(TType).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
                 .ToArray();
 
-            if(types.Length == 0) return serviceCollection;
+            if (types.Length == 0) return serviceCollection;
 
-            foreach(var type in types)
+            foreach (var type in types)
             {
                 serviceCollection.TryAdd(new ServiceDescriptor(typeof(TType), type.AsType(), lifetime));
             }
@@ -58,7 +58,7 @@ namespace Server.Extensions
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var foundAssembly = assemblies.FirstOrDefault(x => x.DefinedTypes.Any(typeInfo => typeInfo.Namespace?.Equals(interfaceNamespace) ?? false));
 
-            if(foundAssembly == null)
+            if (foundAssembly == null)
             {
                 try
                 {
@@ -75,12 +75,12 @@ namespace Server.Extensions
                 .Where(x => x.Namespace == interfaceNamespace && !x.IsInterface && !x.IsAbstract && !x.ContainsGenericParameters && !x.IsNested)
                 .ToList();
 
-            if(types.Count == 0) return serviceCollection;
+            if (types.Count == 0) return serviceCollection;
 
-            foreach(var type in types)
+            foreach (var type in types)
             {
                 var interfaceType = type.GetInterfaces().FirstOrDefault();
-                if(interfaceType != null)
+                if (interfaceType != null)
                 {
                     serviceCollection.TryAdd(new ServiceDescriptor(interfaceType, type.AsType(), lifetime));
                 }
@@ -107,7 +107,7 @@ namespace Server.Extensions
             var notFoundNamespaces = namespaces.Except(foundAssemblies.SelectMany(a => a.GetTypes().Select(t => t.Namespace))).ToList();
             var types = new List<TypeInfo>();
 
-            foreach(var assembly in foundAssemblies)
+            foreach (var assembly in foundAssemblies)
             {
                 var foundTypes = assembly.DefinedTypes
                     .Where(x => namespaces.Contains(x.Namespace) && !x.IsInterface && !x.IsAbstract && !x.IsNested)
@@ -115,7 +115,7 @@ namespace Server.Extensions
                 types.AddRange(foundTypes);
             }
 
-            foreach(var notFound in notFoundNamespaces)
+            foreach (var notFound in notFoundNamespaces)
             {
                 try
                 {
@@ -129,9 +129,9 @@ namespace Server.Extensions
                 catch { }
             }
 
-            if(types.Count == 0) return serviceCollection;
+            if (types.Count == 0) return serviceCollection;
 
-            foreach(var type in types)
+            foreach (var type in types)
             {
                 serviceCollection.TryAdd(new ServiceDescriptor(type.AsType(), type.AsType(), lifetime));
             }
@@ -156,9 +156,9 @@ namespace Server.Extensions
                 .Where(x => x.Namespace == @namespace && !x.IsInterface && !x.IsAbstract && !x.IsNested)
                 .ToArray();
 
-            if(types == null || types.Length == 0) return serviceCollection;
+            if (types == null || types.Length == 0) return serviceCollection;
 
-            foreach(var type in types)
+            foreach (var type in types)
             {
                 serviceCollection.TryAdd(new ServiceDescriptor(type.AsType(), type.AsType(), lifetime));
             }
@@ -190,7 +190,7 @@ namespace Server.Extensions
         public static IServiceCollection CreateServiceFromClasses(this IServiceCollection serviceCollection,
             IEnumerable<Type> serviceClassTypes, ServiceLifetime lifetime = ServiceLifetime.Transient)
         {
-            foreach(var serviceClassType in serviceClassTypes)
+            foreach (var serviceClassType in serviceClassTypes)
             {
                 serviceCollection.TryAdd(new ServiceDescriptor(serviceClassType, serviceClassType, lifetime));
             }
@@ -212,9 +212,9 @@ namespace Server.Extensions
                 .Where(x => typeof(TType).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
                 .ToArray();
 
-            if(types.Length == 0) return serviceDescriptors;
+            if (types.Length == 0) return serviceDescriptors;
 
-            foreach(var type in types)
+            foreach (var type in types)
             {
                 serviceDescriptors.TryAdd(new ServiceDescriptor(type.AsType(), type.AsType(), lifetime));
             }

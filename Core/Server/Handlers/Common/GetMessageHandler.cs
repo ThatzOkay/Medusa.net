@@ -3,7 +3,7 @@ using Server.Models.Response;
 
 namespace Server.Handlers.Common;
 
-public class GetMessageHandler: HandlerWithoutRequest<GetMessageResponse>
+public class GetMessageHandler : HandlerWithoutRequest<GetMessageResponse>
 {
     public override void Configure()
     {
@@ -18,7 +18,7 @@ public class GetMessageHandler: HandlerWithoutRequest<GetMessageResponse>
             Expire = 300,
             Status = 0
         };
-        
+
         return message;
     }
 }

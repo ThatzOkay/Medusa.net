@@ -34,7 +34,7 @@ namespace Server.Utils
                 .Select(i => (byte)i)
                 .ToArray();
 
-            for(int keyStreamIndex = 0, keyIndex = 0; keyStreamIndex < 256; keyStreamIndex++)
+            for (int keyStreamIndex = 0, keyIndex = 0; keyStreamIndex < 256; keyStreamIndex++)
             {
                 keyIndex = (keyIndex + key[keyStreamIndex % key.Length] + keyStream[keyStreamIndex]) & 255;
 

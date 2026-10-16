@@ -15,7 +15,7 @@ public static class UserApi
     internal static IResult GetClaims(HttpContext httpContext)
     {
         var user = httpContext.User;
-        if(!(httpContext.User.Identity?.IsAuthenticated ?? false))
+        if (!(httpContext.User.Identity?.IsAuthenticated ?? false))
         {
             return Results.Unauthorized();
         }

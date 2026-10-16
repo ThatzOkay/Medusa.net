@@ -83,8 +83,8 @@ public sealed class BundleLoader : IDisposable
     public IEnumerable<LoadedObject> EnumerateObjects()
     {
         foreach (var fileInst in _fileInstances)
-        foreach (var info in fileInst.file.AssetInfos)
-            yield return new LoadedObject(fileInst, info);
+            foreach (var info in fileInst.file.AssetInfos)
+                yield return new LoadedObject(fileInst, info);
     }
 
     public AssetTypeValueField GetBaseField(LoadedObject obj) => _manager.GetBaseField(obj.FileInstance, obj.Info);
@@ -96,22 +96,22 @@ public sealed class BundleLoader : IDisposable
         var result = new Dictionary<string, ContainerEntry>();
 
         foreach (var fileInst in _fileInstances)
-        foreach (var info in fileInst.file.GetAssetsOfType(AssetClassID.AssetBundle))
-        {
-            var baseField = _manager.GetBaseField(fileInst, info);
-            foreach (var pair in ArrayElements(baseField.Get("m_Container")))
+            foreach (var info in fileInst.file.GetAssetsOfType(AssetClassID.AssetBundle))
             {
-                var path = pair.Get("first").AsString;
-                var asset = pair.Get("second").Get("asset");
-                if (!ReflectionHelper.TryGetPPtr(asset, out var pathId, out var fileId)) continue;
+                var baseField = _manager.GetBaseField(fileInst, info);
+                foreach (var pair in ArrayElements(baseField.Get("m_Container")))
+                {
+                    var path = pair.Get("first").AsString;
+                    var asset = pair.Get("second").Get("asset");
+                    if (!ReflectionHelper.TryGetPPtr(asset, out var pathId, out var fileId)) continue;
 
-                var typeName = fileId == 0 && fileInst.file.GetAssetInfo(pathId) is { } targetInfo
-                    ? GetTypeName(targetInfo.GetTypeId(fileInst.file))
-                    : "Unknown";
+                    var typeName = fileId == 0 && fileInst.file.GetAssetInfo(pathId) is { } targetInfo
+                        ? GetTypeName(targetInfo.GetTypeId(fileInst.file))
+                        : "Unknown";
 
-                result[path] = new ContainerEntry(pathId, typeName);
+                    result[path] = new ContainerEntry(pathId, typeName);
+                }
             }
-        }
 
         return result;
     }

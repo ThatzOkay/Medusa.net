@@ -13,20 +13,20 @@ public class GetServicesResponse
     public required string Method { get; set; }
 
     [XmlAttribute("mode")]
-    public required  string Mode { get; set; }
-    
+    public required string Mode { get; set; }
+
     [XmlAttribute("status")]
     public int Status { get; set; }
-    
-    [XmlElement("item")] 
+
+    [XmlElement("item")]
     public List<ServiceItem> Items { get; set; } = [];
 }
 
 public record ServiceItem
 {
     [XmlAttribute("name")]
-    public required  string Name { get; set; }
+    public required string Name { get; set; }
 
     [XmlAttribute("url")]
-    public required  string Url { get; set; }
+    public required string Url { get; set; }
 }

@@ -21,17 +21,17 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         var gameModel = GameModel.Parse(model);
 
         // ── Built-in server handlers (host SP) ──────────────────────────────
-        foreach(var handler in Handlers)
+        foreach (var handler in Handlers)
         {
             //Module and service are on the attribute
             var handlerAttribute = handler.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(HandlerAttribute));
 
-            if(handlerAttribute is null)
+            if (handlerAttribute is null)
             {
                 await using var hostScope = _serviceScopeFactory.CreateAsyncScope();
                 var response = await HandleInheritanceClass(handler, gameModel, module, method, body, hostScope.ServiceProvider);
 
-                if(response is not null)
+                if (response is not null)
                 {
                     return response;
                 }
@@ -90,7 +90,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
             throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
         }
 
-        if(ActivatorUtilities.CreateInstance(serviceProvider, handler) is not BaseHandler handlerInstance)
+        if (ActivatorUtilities.CreateInstance(serviceProvider, handler) is not BaseHandler handlerInstance)
         {
             return null;
         }
@@ -113,13 +113,13 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
                     new HandlerDefinition(handler, baseType.GenericTypeArguments[0], baseType.GenericTypeArguments[1]);
             }
         }
-        
+
         try
         {
             var configureMethod = handler.GetMethod("Configure");
             configureMethod?.Invoke(handlerInstance, null);
         }
-        catch(NotImplementedException e)
+        catch (NotImplementedException e)
         {
             _logger.LogError(e, "Configure method not implemented for {Handler}", handler.Name);
             return null;
@@ -131,68 +131,68 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         var handlerMinVer = handlerInstance.Definition.HandlerMinVer;
         var handlerMaxVer = handlerInstance.Definition.HandlerMaxVer;
 
-        if(string.IsNullOrEmpty(handlerModule))
+        if (string.IsNullOrEmpty(handlerModule))
         {
             _logger.LogError("Module not set for {Handler}", handler.Name);
             return null;
         }
 
-        if(string.IsNullOrEmpty(handlerMethod))
+        if (string.IsNullOrEmpty(handlerMethod))
         {
             _logger.LogError("Method not set for {Handler}", handler.Name);
             return null;
         }
 
-        if(!string.IsNullOrEmpty(handlerGameCode))
+        if (!string.IsNullOrEmpty(handlerGameCode))
         {
-            if(handlerGameCode != model.GameCode)
+            if (handlerGameCode != model.GameCode)
                 return null;
         }
 
-        if(!string.IsNullOrEmpty(handlerMinVer))
+        if (!string.IsNullOrEmpty(handlerMinVer))
         {
             var parsedMinVer = long.Parse(handlerMinVer);
 
-            if(model.Version < parsedMinVer)
+            if (model.Version < parsedMinVer)
                 return null;
         }
 
-        if(!string.IsNullOrEmpty(handlerMaxVer))
+        if (!string.IsNullOrEmpty(handlerMaxVer))
         {
             var parsedMaxVer = long.Parse(handlerMaxVer);
-            if(model.Version > parsedMaxVer)
+            if (model.Version > parsedMaxVer)
                 return null;
         }
 
-        if(handlerModule != module || handlerMethod != method)
+        if (handlerModule != module || handlerMethod != method)
             return null;
-        
+
         if (handler.IsAbstract)
         {
             throw new InvalidOperationException($"Cannot create instance of abstract class: {handler.FullName}");
         }
 
         object? request = null;
-        
+
         if (!isHandlerWithoutRequest)
         {
             var modelType = handlerInstance.Definition.RequestType;
 
             var serializer = new XmlSerializer(modelType);
-            
+
             var callElement = body.Element("call");
 
             if (callElement is null)
             {
                 _logger.LogError("Call element not found in request");
-                return null;           
+                return null;
             }
-            
+
             request = serializer.Deserialize(callElement.FirstNode!.CreateReader());
         }
-        
+
         XElement? responseElement = null;
-        
+
         MethodInfo? handleMethod;
         MethodInfo? handleAsyncMethod;
 
@@ -257,7 +257,7 @@ public class HandlerService(IServiceScopeFactory serviceScopeFactory, ILogger<Ha
         {
             return xDocument.Root!;
         }
-        
+
         var serializer = new XmlSerializer(obj.GetType());
 
         var ns = new XmlSerializerNamespaces();

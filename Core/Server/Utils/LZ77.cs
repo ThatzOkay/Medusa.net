@@ -16,17 +16,17 @@ public class LZ77
         var b = 8; // read next bitmask byte on start
         byte mask = 0;
 
-        while(true)
+        while (true)
         {
             // read bitmask on block end
-            if(b == 8)
+            if (b == 8)
             {
                 mask = data[p];
                 p += 1;
                 b = 0;
             }
             // get mask for next byte
-            if((mask & 1) == 1)
+            if ((mask & 1) == 1)
             { // not coded
                 // copy the byte from data to result
                 res[r] = data[p];
@@ -39,7 +39,7 @@ public class LZ77
                 int distance = data[p];
                 int count = data[p + 1];
                 // EOF mark
-                if(distance == 0 && count == 0)
+                if (distance == 0 && count == 0)
                 {
                     break;
                 }
@@ -50,7 +50,7 @@ public class LZ77
                 count = (count & 0x0F) + 3;
                 // copy earlier result bytes to the end
                 t = r - distance; // initialize traceback location
-                for(var i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     res[r] = t < 0 ? (byte)0x00 : res[t];
                     r += 1;
@@ -71,11 +71,11 @@ public class LZ77
     {
         var res = new byte[data.Length + data.Length / 8 + 3];
         var p = 0;
-        for(var i = 0; i < data.Length; i++)
+        for (var i = 0; i < data.Length; i++)
         {
-            if(i % 8 == 0)
+            if (i % 8 == 0)
             {
-                if(data.Length - i < 8)
+                if (data.Length - i < 8)
                 {
                     res[p] = (byte)(Math.Pow(2, data.Length - i) - 1);
                 }

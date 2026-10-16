@@ -8,23 +8,23 @@ namespace Server.Models.Response;
 public class EaCoinCheckInResponse
 {
     [XmlAttribute("status")]
-    public required  int Status { get; set; }
-    
+    public required int Status { get; set; }
+
     [XmlAttribute("expire")]
-    public required  int Expire { get; set; }
-    
+    public required int Expire { get; set; }
+
     [XmlElement("sequence")]
     public XrpcShort Sequence { get; set; }
-    
+
     [XmlElement("acstatus")]
     public XrpcUByte AcStatus { get; set; }
-    
+
     [XmlElement("acid")]
     public XrpcString AcId { get; set; }
-    
+
     [XmlElement("acname")]
     public XrpcString AcName { get; set; }
-    
+
     [XmlElement("balance")]
     public XrpcInt Balance { get; set; }
 

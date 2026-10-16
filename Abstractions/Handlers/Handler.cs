@@ -4,7 +4,7 @@ using System.Xml.Linq;
 
 namespace Abstractions.Handlers;
 
-public abstract partial class Handler<TRequest, TResponse>: BaseHandler where TRequest : notnull
+public abstract partial class Handler<TRequest, TResponse> : BaseHandler where TRequest : notnull
 {
 
     // protected void Module(string module)
@@ -40,10 +40,10 @@ public abstract class HandlerWithoutRequest<TResponse> : Handler<EmptyRequest, T
 {
     public virtual TResponse Handle(GameModel model) { throw new NotImplementedException("Handle method not implemented."); }
     public virtual Task<TResponse> HandleAsync(GameModel model) { throw new NotImplementedException("Handle method not implemented."); }
-    
+
     public sealed override Task<TResponse> HandleAsync(EmptyRequest _, GameModel model)
         => HandleAsync(model);
-    
+
     public sealed override TResponse Handle(EmptyRequest _, GameModel model)
      => Handle(model);
 }

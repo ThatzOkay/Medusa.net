@@ -38,7 +38,7 @@ public class CardMutation
         var entity = (await appDbContext.Cards.AddAsync(card, cancellationToken)).Entity;
 
         await appDbContext.SaveChangesAsync(cancellationToken);
-        
+
         return appDbContext.Cards.Where(c => c.Id == entity.Id);
     }
 }

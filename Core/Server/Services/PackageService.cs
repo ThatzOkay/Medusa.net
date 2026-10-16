@@ -57,7 +57,7 @@ public sealed class PackageService : IPackageService, IDisposable
         if (config is null) return [];
 
         var filesDir = SysPath.Combine(_packagesRoot, model.GameCode, "files");
-        var entries  = new List<PackageEntry>();
+        var entries = new List<PackageEntry>();
 
         foreach (var pkg in config.Packages)
         {
@@ -73,15 +73,15 @@ public sealed class PackageService : IPackageService, IDisposable
 
             entries.Add(new PackageEntry
             {
-                Url     = $"{baseUrl}/packages/{model.GameCode}/{pkg.Filename}",
-                Name    = pkg.Name,
-                Desc    = pkg.Desc,
-                Size    = new FileInfo(filePath).Length,
+                Url = $"{baseUrl}/packages/{model.GameCode}/{pkg.Filename}",
+                Name = pkg.Name,
+                Desc = pkg.Desc,
+                Size = new FileInfo(filePath).Length,
                 PkgType = "auto",
                 SumType = pkg.SumType,
-                Sum     = pkg.Sum,
-                From    = pkg.From,
-                Till    = pkg.Till
+                Sum = pkg.Sum,
+                From = pkg.From,
+                Till = pkg.Till
             });
         }
 
@@ -136,14 +136,14 @@ public sealed class PackageService : IPackageService, IDisposable
 
 internal sealed class PackageDefinition
 {
-    [JsonPropertyName("name")]    public string Name     { get; set; } = "";
-    [JsonPropertyName("desc")]    public string Desc     { get; set; } = "";
-    [JsonPropertyName("pkgType")] public string PkgType  { get; set; } = "all";
-    [JsonPropertyName("filename")]public string Filename { get; set; } = "";
-    [JsonPropertyName("sumType")] public string SumType  { get; set; } = "md5";
-    [JsonPropertyName("sum")]     public string Sum      { get; set; } = "";
-    [JsonPropertyName("from")]    public long   From     { get; set; } = 0;
-    [JsonPropertyName("till")]    public long   Till     { get; set; } = 0;
+    [JsonPropertyName("name")] public string Name { get; set; } = "";
+    [JsonPropertyName("desc")] public string Desc { get; set; } = "";
+    [JsonPropertyName("pkgType")] public string PkgType { get; set; } = "all";
+    [JsonPropertyName("filename")] public string Filename { get; set; } = "";
+    [JsonPropertyName("sumType")] public string SumType { get; set; } = "md5";
+    [JsonPropertyName("sum")] public string Sum { get; set; } = "";
+    [JsonPropertyName("from")] public long From { get; set; } = 0;
+    [JsonPropertyName("till")] public long Till { get; set; } = 0;
 }
 
 internal sealed class GamePackageConfig

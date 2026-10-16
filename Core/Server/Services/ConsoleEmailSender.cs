@@ -32,7 +32,7 @@ public class ConsoleEmailSender(ILogger<ConsoleEmailSender> logger)
         _logger.LogInformation("Password reset link for {Email}: {Link}", email, link);
         return Task.CompletedTask;
     }
-    
+
     private static string BuildResetPasswordLink(string email, string resetCode) =>
         $"{ServerAddress.PublicUrl.TrimEnd('/')}/auth/resetPassword?email={Uri.EscapeDataString(email)}&code={Uri.EscapeDataString(resetCode)}";
 }

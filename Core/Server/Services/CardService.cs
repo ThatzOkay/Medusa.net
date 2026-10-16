@@ -25,7 +25,7 @@ public class CardService : ICardService
 
     public string ConvertKonamiIdToUid(string konamiId)
     {
-        if(konamiId.Length != 16)
+        if (konamiId.Length != 16)
         {
             _logger.LogError("Invalid Konami ID length must be 16 characters");
             return string.Empty;
@@ -33,7 +33,7 @@ public class CardService : ICardService
 
         var cardType = konamiId[14] == '1' ? 1 : konamiId[14] == '2' ? 2 : -1;
 
-        if(cardType == -1)
+        if (cardType == -1)
         {
             _logger.LogError("Invalid Konami ID");
             return string.Empty;
@@ -41,14 +41,14 @@ public class CardService : ICardService
 
         var card = konamiId.Select(k => (byte)Alphabet.IndexOf(k)).ToArray();
 
-        if(card[11] % 2 != card[12] % 2 || card[13] != (card[12] ^ 1) || card[15] != CalculateChecksum(card))
+        if (card[11] % 2 != card[12] % 2 || card[13] != (card[12] ^ 1) || card[15] != CalculateChecksum(card))
         {
 
             _logger.LogError("Invalid card data");
             return string.Empty;
         }
 
-        for(var i = 13; i > 0; i--)
+        for (var i = 13; i > 0; i--)
         {
             card[i] ^= card[i - 1];
         }
@@ -68,7 +68,7 @@ public class CardService : ICardService
 
     public string ConvertUidToKonamiId(string uid)
     {
-        if(uid.Length != 16)
+        if (uid.Length != 16)
         {
             _logger.LogError("Invalid UID length must be 16 characters");
             return string.Empty;
@@ -76,7 +76,7 @@ public class CardService : ICardService
 
         var cardType = uid.StartsWith("E004") ? 1 : uid[0] == '0' ? 2 : -1;
 
-        if(cardType == -1)
+        if (cardType == -1)
         {
             _logger.LogError("Invalid UID prefix");
             return string.Empty;
@@ -88,7 +88,7 @@ public class CardService : ICardService
 
         konamiId = konamiId.Reverse().ToArray();
 
-        if(konamiId.Length != 8)
+        if (konamiId.Length != 8)
         {
             _logger.LogError("Invalid UID length. Must be 8 bytes");
             return string.Empty;
@@ -96,7 +96,7 @@ public class CardService : ICardService
 
         var encryptedId = _desEncryption.Encrypt(konamiId);
 
-        if(encryptedId.Length != 8)
+        if (encryptedId.Length != 8)
         {
             _logger.LogError("Invalid ID length. Must be 8 bytes");
             return string.Empty;
@@ -105,7 +105,7 @@ public class CardService : ICardService
         var unpackedId = Unpack5(encryptedId);
         unpackedId = unpackedId.Take(13).Concat("\0\0\0"u8.ToArray()).ToArray();
 
-        if(unpackedId.Length != 16)
+        if (unpackedId.Length != 16)
         {
             _logger.LogError("Invalid unpacked ID length. Must be 16 bytes");
             return string.Empty;
@@ -114,7 +114,7 @@ public class CardService : ICardService
         unpackedId[0] ^= (byte)cardType;
         unpackedId[13] = 1;
 
-        for(var i = 1; i < 14; i++)
+        for (var i = 1; i < 14; i++)
         {
             unpackedId[i] ^= unpackedId[i - 1];
         }
@@ -129,21 +129,21 @@ public class CardService : ICardService
     {
         // Convert each byte to an 8-bit binary string and concatenate them
         var binaryString = new StringBuilder();
-        foreach(var b in data)
+        foreach (var b in data)
         {
             binaryString.Append(Convert.ToString(b, 2).PadLeft(8, '0'));
         }
 
         // Ensure the total length is a multiple of 5 by padding with zeroes if necessary
         var remainder = binaryString.Length % 5;
-        if(remainder != 0)
+        if (remainder != 0)
         {
             binaryString.Append(new string('0', 5 - remainder));
         }
 
         // Convert the 5-bit chunks back into bytes
         var result = new List<byte>();
-        for(var i = 0; i < binaryString.Length; i += 5)
+        for (var i = 0; i < binaryString.Length; i += 5)
         {
             var chunk = binaryString.ToString(i, 5);
             result.Add(Convert.ToByte(chunk, 2));
@@ -155,13 +155,13 @@ public class CardService : ICardService
     private static byte[] Pack5(byte[] data)
     {
         var packed = new StringBuilder();
-        foreach(var b in data)
+        foreach (var b in data)
         {
             packed.Append(Convert.ToString(b, 2).PadLeft(5, '0'));
         }
 
         // Padding if not a multiple of 8
-        if(packed.Length % 8 != 0)
+        if (packed.Length % 8 != 0)
         {
             packed.Append('0', 8 - packed.Length % 8);
         }
@@ -174,9 +174,9 @@ public class CardService : ICardService
     private static byte CalculateChecksum(byte[] data)
     {
         var checksum = 0;
-        for(var i = 0; i < 15; i++)
+        for (var i = 0; i < 15; i++)
         {
-            if(i >= data.Length)
+            if (i >= data.Length)
             {
                 break;
             }
@@ -184,7 +184,7 @@ public class CardService : ICardService
         }
 
         // Reduce the checksum to fit within 5 bits
-        while(checksum > 31)
+        while (checksum > 31)
         {
             checksum = (checksum >> 5) + (checksum & 31);
         }

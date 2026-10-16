@@ -4,7 +4,7 @@ using Server.Models.Response;
 
 namespace Server.Handlers.Common;
 
-public class GetFacilityHandler: HandlerWithoutRequest<GetFacilityResponse>
+public class GetFacilityHandler : HandlerWithoutRequest<GetFacilityResponse>
 {
     public override void Configure()
     {

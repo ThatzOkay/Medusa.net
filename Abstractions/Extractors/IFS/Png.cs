@@ -112,15 +112,15 @@ internal static class Png
                 case "IHDR" when size != 13 || width != 0 || height != 0:
                     throw new InvalidDataException("The cropped PNG header is invalid.");
                 case "IHDR":
-                {
-                    width = (int)BinaryPrimitives.ReadUInt32BigEndian(chunkData[..4]);
-                    height = (int)BinaryPrimitives.ReadUInt32BigEndian(chunkData.Slice(4, 4));
-                    if (width != expectedWidth || height != expectedHeight)
-                        throw new InvalidDataException("The cropped image has an invalid pixel size.");
-                    if (chunkData[8] != 8 || chunkData[9] != 6 || chunkData[10] != 0 || chunkData[11] != 0 || chunkData[12] != 0)
-                        throw new InvalidDataException("The cropped PNG must use 8-bit RGBA pixels without interlacing.");
-                    break;
-                }
+                    {
+                        width = (int)BinaryPrimitives.ReadUInt32BigEndian(chunkData[..4]);
+                        height = (int)BinaryPrimitives.ReadUInt32BigEndian(chunkData.Slice(4, 4));
+                        if (width != expectedWidth || height != expectedHeight)
+                            throw new InvalidDataException("The cropped image has an invalid pixel size.");
+                        if (chunkData[8] != 8 || chunkData[9] != 6 || chunkData[10] != 0 || chunkData[11] != 0 || chunkData[12] != 0)
+                            throw new InvalidDataException("The cropped PNG must use 8-bit RGBA pixels without interlacing.");
+                        break;
+                    }
                 case "IDAT" when width == 0 || height == 0:
                     throw new InvalidDataException("The cropped PNG chunk order is invalid.");
                 case "IDAT":

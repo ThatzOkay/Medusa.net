@@ -22,7 +22,7 @@ public class AlivePcbTrackerHandler : HandlerWithoutRequest<AlivePcbTrackerRespo
             Limit = 0,
             Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
-        
+
         return pcbtracker;
     }
 }

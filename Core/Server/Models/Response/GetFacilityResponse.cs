@@ -152,7 +152,7 @@ public record FacilityUrl
     public required XrpcString EaPass { get; set; }
 
     [XmlElement("arcadefan")]
-    public required XrpcString ArcadeFan { get; set;}
+    public required XrpcString ArcadeFan { get; set; }
 
     [XmlElement("konaminetdx")]
     public required XrpcString KonamiNetDx { get; set; }

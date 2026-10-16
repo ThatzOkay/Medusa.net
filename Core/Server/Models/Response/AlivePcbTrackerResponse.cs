@@ -7,20 +7,20 @@ namespace Server.Models.Response;
 public class AlivePcbTrackerResponse
 {
     [XmlAttribute("status")]
-    public required  int Status { get; set; }
-    
+    public required int Status { get; set; }
+
     [XmlAttribute("expire")]
-    public required  int Expire { get; set; }
-    
+    public required int Expire { get; set; }
+
     [XmlAttribute("ecenable")]
-    public required  int EcEnable { get; set; }
-    
+    public required int EcEnable { get; set; }
+
     [XmlAttribute("eclimit")]
-    public required  int EcLimit { get; set; }
-    
+    public required int EcLimit { get; set; }
+
     [XmlAttribute("limit")]
-    public required  int Limit { get; set; }
-    
+    public required int Limit { get; set; }
+
     [XmlAttribute("time")]
     public required long Time { get; set; }
 }

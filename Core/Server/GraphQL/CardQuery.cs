@@ -16,7 +16,7 @@ public class CardQuery
         {
             throw new ArgumentException("Cannot find userId");
         }
-        
+
         var cards = appDbContext.Cards.Where(c => c.UserId == userId);
         return cards;
     }

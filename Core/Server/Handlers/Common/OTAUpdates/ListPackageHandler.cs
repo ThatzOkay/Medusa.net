@@ -12,7 +12,7 @@ public class ListPackageHandler : HandlerWithoutRequest<ListPackageResponse>
     public ListPackageHandler(IPackageService packages, MedusaBaseUrl baseUrl)
     {
         _packages = packages;
-        _baseUrl  = baseUrl;
+        _baseUrl = baseUrl;
     }
 
     public override void Configure()
@@ -26,6 +26,6 @@ public class ListPackageHandler : HandlerWithoutRequest<ListPackageResponse>
         {
             Status = 0,
             Expire = 1200,
-            Items  = _packages.GetPackagesForModel(model, _baseUrl.Value)
+            Items = _packages.GetPackagesForModel(model, _baseUrl.Value)
         };
 }

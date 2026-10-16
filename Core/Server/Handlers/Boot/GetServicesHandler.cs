@@ -40,7 +40,7 @@ namespace Server.Handlers.Boot
         "slobby", "sglobby", "eacharge", "sppass"
     };
 
-            foreach(var service in coreServices)
+            foreach (var service in coreServices)
             {
                 services.Items.Add(new ServiceItem
                 {
