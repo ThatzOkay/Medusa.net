@@ -6,5 +6,6 @@ namespace Server.Models.Response;
 [Serializable]
 public class DlStatusProgressResponse
 {
-    [XmlAttribute("status")] public required int Status { get; set; }
+    [XmlAttribute("status")]
+    public required int Status { get; set; }
 }
