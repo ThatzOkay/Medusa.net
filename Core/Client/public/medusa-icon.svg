@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="medusa-net-title">
+  <title id="medusa-net-title">Medusa.net</title>
+  <defs>
+    <radialGradient id="mn-bg" cx="50%" cy="44%" r="62%">
+      <stop offset="0" stop-color="#1d3a33"/>
+      <stop offset="1" stop-color="#0a1211"/>
+    </radialGradient>
+    <clipPath id="mn-clip"><rect width="256" height="256" rx="56"/></clipPath>
+
+    <!-- a viper's head, drawn pointing along +x -->
+    <g id="mn-head">
+      <path d="M-9-5.5Q0-8 10-2Q13 0 10 2Q0 8-9 5.5Z" fill="#3f9a74" stroke="#0a2a20" stroke-width="2.6" stroke-linejoin="round"/>
+      <circle cx="2" cy="-2.2" r="1.7" fill="#e9b949"/>
+    </g>
+
+    <!-- the five thick snakes on the right side of the head; the left side is the mirror image -->
+    <g id="mn-snakes" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g stroke="#0a2a20" stroke-width="22">
+        <path d="M128 100C140 60 190 50 197 82C201 100 180 108 172 94"/>
+        <path d="M150 104C186 92 214 100 226 128C233 146 214 156 208 142"/>
+        <path d="M156 124C196 124 224 150 218 184C215 200 198 200 198 188"/>
+        <path d="M152 150C180 156 196 180 186 208C182 220 168 216 172 206"/>
+        <path d="M138 98C150 74 134 56 150 36C155 29 166 32 163 40"/>
+      </g>
+      <g stroke="#3f9a74" stroke-width="15">
+        <path d="M128 100C140 60 190 50 197 82C201 100 180 108 172 94"/>
+        <path d="M150 104C186 92 214 100 226 128C233 146 214 156 208 142"/>
+        <path d="M156 124C196 124 224 150 218 184C215 200 198 200 198 188"/>
+        <path d="M152 150C180 156 196 180 186 208C182 220 168 216 172 206"/>
+        <path d="M138 98C150 74 134 56 150 36C155 29 166 32 163 40"/>
+      </g>
+      <g stroke="#7fd1ac" stroke-width="3" opacity="0.55">
+        <path d="M130 94C144 58 188 48 195 80"/>
+        <path d="M154 99C188 88 212 96 222 122"/>
+        <path d="M160 119C196 119 220 144 214 178"/>
+        <path d="M156 145C182 151 192 172 183 198"/>
+        <path d="M142 93C153 72 138 56 152 40"/>
+      </g>
+      <use xlink:href="#mn-head" transform="translate(172 94) rotate(-120) scale(1.45)"/>
+      <use xlink:href="#mn-head" transform="translate(208 142) rotate(-113) scale(1.45)"/>
+      <use xlink:href="#mn-head" transform="translate(198 188) rotate(-90) scale(1.45)"/>
+      <use xlink:href="#mn-head" transform="translate(172 206) rotate(-68) scale(1.45)"/>
+      <use xlink:href="#mn-head" transform="translate(163 40) rotate(110) scale(1.45)"/>
+    </g>
+  </defs>
+
+  <g clip-path="url(#mn-clip)">
+    <rect width="256" height="256" fill="url(#mn-bg)"/>
+
+    <!-- shoulders and neck -->
+    <path d="M58 256C62 226 96 214 114 208L142 208C160 214 194 226 198 256Z" fill="#cdd2a0" stroke="#0a2a20" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M116 164C116 184 115 198 108 212L148 212C141 198 140 184 140 164Z" fill="#b6bc88" stroke="#0a2a20" stroke-width="3.5" stroke-linejoin="round"/>
+
+    <!-- the mass of hair the snakes grow out of -->
+    <ellipse cx="128" cy="112" rx="64" ry="54" fill="#0e3328"/>
+
+    <use xlink:href="#mn-snakes"/>
+    <use xlink:href="#mn-snakes" transform="translate(256 0) scale(-1 1)"/>
+
+    <!-- the face: small, V-shaped, severe -->
+    <path d="M93 120C93 98 108 90 128 90C148 90 163 98 163 120C163 144 150 166 128 179C106 166 93 144 93 120Z" fill="#cdd2a0" stroke="#0a2a20" stroke-width="4" stroke-linejoin="round"/>
+
+    <!-- brows pulled down and in -->
+    <path d="M103 117Q113 109 125 119M153 117Q143 109 131 119" fill="none" stroke="#1f2a1a" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- heavy-lidded eyes with a gold stare -->
+    <path d="M106 127Q115 120 124 127Q115 132 106 127Z" fill="#f4f1e0" stroke="#1f2a1a" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M150 127Q141 120 132 127Q141 132 150 127Z" fill="#f4f1e0" stroke="#1f2a1a" stroke-width="1.8" stroke-linejoin="round"/>
+    <circle cx="115" cy="126.3" r="3.8" fill="#e0b030"/>
+    <circle cx="141" cy="126.3" r="3.8" fill="#e0b030"/>
+    <circle cx="115" cy="126.3" r="1.9" fill="#1a1200"/>
+    <circle cx="141" cy="126.3" r="1.9" fill="#1a1200"/>
+    <path d="M104 127Q115 117 126 127M152 127Q141 117 130 127" fill="none" stroke="#1f2a1a" stroke-width="3.2" stroke-linecap="round"/>
+
+    <!-- nose -->
+    <path d="M128 130V147M122 151Q128 155 134 151" fill="none" stroke="#1f2a1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- closed, stern mouth -->
+    <path d="M115 161Q121 157 128 158Q135 157 141 161" fill="none" stroke="#1f2a1a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M121 165Q128 169 135 165" fill="none" stroke="#7a5645" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+  <rect x="8" y="8" width="240" height="240" rx="49" fill="none" stroke="#c9a24a" stroke-width="3" opacity="0.65"/>
+</svg>

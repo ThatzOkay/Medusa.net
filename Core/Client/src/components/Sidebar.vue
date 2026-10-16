@@ -72,7 +72,10 @@ const items = computed<NavListItem[]>(() => [
     >
         <div class="flex flex-col gap-1 p-4 flex-1">
             <div class="flex items-center justify-between px-3 pt-2 pb-4">
-                <span class="text-md-headline-small text-md-on-surface">Medusa.net</span>
+                <div class="flex items-center gap-3">
+                    <img src="/medusa-icon.svg" alt="" class="w-9 h-9 shrink-0" />
+                    <span class="text-md-headline-small text-md-on-surface">Medusa.net</span>
+                </div>
                 <button
                     type="button"
                     class="md:hidden p-1 rounded-full text-md-on-surface-variant hover:bg-md-on-surface/8"
