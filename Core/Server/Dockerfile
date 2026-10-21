@@ -3,7 +3,7 @@
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-RUN mkdir -p /app/database /app/plugins \
+RUN mkdir -p /app/database /app/plugins /app/static /app/Data/packages \
     && chown -R $APP_UID:$APP_UID /app
 USER $APP_UID
 EXPOSE 8080
