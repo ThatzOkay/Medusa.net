@@ -29,6 +29,7 @@ public class GetRefIdCardManagementHandler(ICardService cardService, UserManager
         {
             Status = 0,
             DataId = card.RawId,
+            Pcode = konamiId,
             ReferenceId = card.Id.ToString().PadLeft(16, '0')
         };
 

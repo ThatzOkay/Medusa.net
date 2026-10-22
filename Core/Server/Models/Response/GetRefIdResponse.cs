@@ -14,4 +14,7 @@ public class GetRefIdResponse
 
     [XmlAttribute("dataid")]
     public required string DataId { get; set; }
+
+    [XmlAttribute("pcode")]
+    public string Pcode { get; set; } = "";
 }
