@@ -260,7 +260,6 @@ AmusementRequest BuildAmusementRequest(string model, string? module, string? met
 async Task<IResult> HandleEAmuseRoute(AmusementRequest amusementRequest, HttpContext httpContext,
     ILogger<Program> logger, IHandlerService handlerService, IPluginService pluginService)
 {
-    Console.WriteLine(httpContext.Request.Headers.UserAgent);
     // Enable buffering to allow multiple reads of the request body
     httpContext.Request.EnableBuffering();
     // The body is 932 encoded xml
@@ -295,7 +294,7 @@ async Task<byte[]> HandleEAmuseRequest(AmusementRequest request, string body, st
     bool isEncoded, string encoding, ILogger<Program> logger, IHandlerService handlerService,
     IPluginService pluginService)
 {
-    logger.LogInformation("Handling {Module} {Method}", request.Module, request.Method);
+    logger.LogDebug("Handling {Module} {Method}", request.Module, request.Method);
 
     var document = new XDocument();
 
