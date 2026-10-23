@@ -112,6 +112,16 @@ builder.Services.AddSingleton<MedusaBaseUrl>();
 
 var app = builder.Build();
 
+// Warm the public IP cache so facility.get never waits on ifconfig.me
+try
+{
+    _ = IpUtils.GetIpv4();
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Could not resolve public IPv4 at startup; facility.get will retry on first request");
+}
+
 pluginService.SetServiceProvider(app.Services);
 await pluginService.ActivatePluginsAsync(app);
 

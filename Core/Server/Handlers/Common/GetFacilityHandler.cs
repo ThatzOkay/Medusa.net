@@ -1,5 +1,6 @@
 using Abstractions.Handlers;
 using Abstractions.SerializationTypes;
+using Abstractions.Utils;
 using Server.Models.Response;
 
 namespace Server.Handlers.Common;
@@ -43,7 +44,7 @@ public class GetFacilityHandler : HandlerWithoutRequest<GetFacilityResponse>
             },
             PortForward = new FacilityPortForward()
             {
-                GlobalIp = new XrpcIp4("127.0.0.1"),
+                GlobalIp = new XrpcIp4(IpUtils.GetIpv4()),
                 GlobalPort = new XrpcUShort(5246),
                 PrivatePort = new XrpcUShort(5246)
             },

@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
@@ -28,5 +30,13 @@ public static class IpUtils
         }
 
         return null;
+    }
+
+    private static readonly HttpClient HttpClient = new();
+    private static string? _cachedIpv4;
+
+    public static string GetIpv4()
+    {
+        return _cachedIpv4 ??= HttpClient.GetStringAsync("https://ifconfig.me/ip").GetAwaiter().GetResult().Trim();
     }
 }
